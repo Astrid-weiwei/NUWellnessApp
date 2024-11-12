@@ -1,20 +1,26 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import HomeScreen from './screens/HomeScreen';
+import MoodTrackerScreen from './screens/MoodTrackerScreen';
+import HabitsTrackerScreen from './screens/HabitsTrackerScreen';
+import TaskManagerScreen from './screens/TaskManagerScreen';
+import ActivitiesScreen from './screens/ActivitiesScreen';
+import ToolsScreen from './screens/ToolsScreen';
+
+const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Tab.Navigator initialRouteName="Home">
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Mood Tracker" component={MoodTrackerScreen} />
+        <Tab.Screen name="Habits Tracker" component={HabitsTrackerScreen} />
+        <Tab.Screen name="Task Manager" component={TaskManagerScreen} />
+        <Tab.Screen name="Activities" component={ActivitiesScreen} />
+        <Tab.Screen name="Tools" component={ToolsScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
