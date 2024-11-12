@@ -14,11 +14,12 @@
     "firebase": "^11.0.1",
     "react": "18.3.1",
     "react-native": "0.76.1",
+    "react-native-gesture-handler": "^2.20.2",
+    "react-native-reanimated": "^1.13.4",
     "react-native-safe-area-context": "^4.14.0",
     "react-native-screens": "^4.0.0",
     "react-navigation": "^4.4.4",
-    "react-navigation-stack": "^2.10.4",
-    "react-navigation-tabs": "^2.11.2"
+    "react-navigation-stack": "^2.10.4"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"
