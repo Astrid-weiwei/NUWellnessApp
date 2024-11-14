@@ -10,22 +10,22 @@ export default function HomeScreen({ navigation }) {
         <QuickView 
           label="Mood Tracker" 
           icon={require('../assets/mood.png')} 
-          onPress={() => navigation.navigate('Tools')} 
+          onPress={() => navigation.navigate('Tools', { screen: 'Mood Tracker' })} 
         />
         <QuickView 
           label="Challenging Negative Thoughts" 
           icon={require('../assets/negative_thoughts.png')} 
-          onPress={() => navigation.navigate('Tools')}
+          onPress={() => navigation.navigate('Tools', { screen: 'Challenging Negative Thoughts' })}
         />
         <QuickView 
           label="Work" 
           icon={require('../assets/work.png')} 
-          onPress={() => navigation.navigate('Activities')}
+          onPress={() => navigation.navigate('Activities', { screen: 'Work' })}
         />
         <QuickView 
           label="Life" 
           icon={require('../assets/life.png')} 
-          onPress={() => navigation.navigate('Activities')}
+          onPress={() => navigation.navigate('Activities', { screen: 'Life' })}
         />
       </View>
     </View>
