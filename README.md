@@ -1,74 +1,94 @@
-# NUWellnessApp
+# NUWellness App
 
 ## Overview
-NUWellnessApp is a React Native app that provides wellness tools, including a mood tracker, habit tracker, and task manager. It uses Firebase for data storage.
+This React Native app helps users manage their to-do lists for work and personal life, track their mood entries, and access tools for mental well-being. The app integrates with Firebase Firestore for data storage and provides essential CRUD (Create, Read, Update, Delete) operations to allow users to add, complete, and delete tasks, as well as track mood entries.
 
-## Firebase Configuration
-The app connects to Firebase to manage user data. It has three primary collections in Firestore:
+## Features
+- Work and Life To-Do lists with toggle for task completion
+- Mood tracking with journal entries
+- Tools section for mental wellness:
+  - **Mood Tracker**: Records mood and journal entries.
+  - **Challenging Negative Thoughts**: Prompts to help users manage negative thoughts.
+  - **Meditation**: Provides quick meditation techniques.
+  - **Self-Assessment**: Offers tools for self-assessment, such as PHQ-9 for depression and GAD-7 for anxiety.
+- Firebase Firestore integration for persistent data storage
 
-### Data Model and Collections
+## Components and Structure
+The app is structured with React Navigation to handle screen transitions between the main pages:
+- **HomeScreen**: Displays quick views for navigating to key functionalities like Work and Life To-Do lists, Mood Tracker, and other tools.
+- **WorkScreen**: Manages the to-do list for work-related tasks.
+- **LifeScreen**: Manages the to-do list for personal life tasks.
+- **ToolsScreen**: Contains access to all the tools listed above for mental well-being.
+  - **MoodTrackerScreen**: Allows users to record and view their mood entries along with a journal.
+  - **ChallengingNegativeThoughtsScreen**: Helps users analyze and manage their thoughts with guided questions.
+  - **MeditationScreen**: Provides simple meditation exercises.
+  - **SelfAssessmentScreen**: Allows users to take self-assessment questionnaires (e.g., PHQ-9, GAD-7).
+  
+### Navigation
+The app uses two main navigators:
+- **Tab Navigator** for the bottom navigation bar, containing Home, Tools, and Activities.
+- **Stack Navigators** for deeper navigation within each section, enabling users to drill down into specific screens (e.g., viewing the Work and Life To-Do lists from Activities or exploring tools from ToolsScreen).
 
-1. **MoodEntries**
-   - Stores user mood entries.
-   - Fields: 
-     - `mood` (string)
-     - `journal` (string)
-     - `date` (timestamp)
-   - CRUD Operations:
-     - **Create**: Adding a new mood entry.
-     - **Read**: Fetching all mood entries.
+### CRUD Operations
+The app integrates with Firebase Firestore to implement CRUD operations for each data collection:
+1. **WorkTodos**: Supports Create, Read, Update (completion status), and Delete for work-related tasks.
+2. **LifeTodos**: Supports Create, Read, Update (completion status), and Delete for personal tasks.
+3. **MoodEntries**: Supports Create, Read, and Delete for mood entries with journaling functionality.
 
-2. **Tasks**
-   - Manages tasks in the task manager.
-   - Fields: 
-     - `title` (string)
-     - `completed` (boolean)
-     - `date` (timestamp)
-   - CRUD Operations:
-     - **Create**: Adding a new task.
-     - **Read**: Fetching all tasks.
-     - **Update**: Marking a task as completed.
-     - **Delete**: Deleting a task (not yet implemented but planned).
+---
 
-3. **Habits**
-   - Tracks user habits.
-   - Fields: 
-     - `habitName` (string)
-     - `isActive` (boolean)
-     - `dateAdded` (timestamp)
-   - CRUD Operations:
-     - **Create**: Adding a new habit.
-     - **Read**: Fetching all habits.
-     - **Delete**: Deleting a habit.
+## Data Model
 
-### Screens and Components
+### Collections in Firestore
+1. **WorkTodos**
+   - **Fields**:
+     - `id` (string): Document ID.
+     - `text` (string): Task description.
+     - `completed` (boolean): Indicates if the task is completed.
+   - **Operations**:
+     - **Create**: Add new work tasks.
+     - **Read**: Display existing tasks.
+     - **Update**: Mark tasks as completed.
+     - **Delete**: Remove tasks.
 
-The app consists of multiple screens, each designed to interact with the Firestore collections through the Firebase service layer:
+2. **LifeTodos**
+   - **Fields**:
+     - `id` (string): Document ID.
+     - `text` (string): Task description.
+     - `completed` (boolean): Indicates if the task is completed.
+   - **Operations**:
+     - **Create**: Add new life tasks.
+     - **Read**: Display existing tasks.
+     - **Update**: Mark tasks as completed.
+     - **Delete**: Remove tasks.
 
-- **Mood Tracker**: Allows users to add mood entries and view previous entries.
-- **Task Manager**: Provides functionality for adding, viewing, and completing tasks.
-- **Habits Tracker**: Allows users to add and view habits they’re tracking.
+3. **MoodEntries**
+   - **Fields**:
+     - `id` (string): Document ID.
+     - `mood` (string): Mood label (e.g., "Happy", "Sad").
+     - `journal` (string): Journal entry text.
+     - `timestamp` (datetime): Date and time of the mood entry.
+   - **Operations**:
+     - **Create**: Add new mood entries.
+     - **Read**: Display existing mood entries.
+     - **Delete**: Remove mood entries.
 
-### Team Contributions
+---
 
-- **[Your Name]**: Developed the Mood Tracker screen and integrated Firestore for adding mood entries.
-- **[Other Member Name]**: Created the Task Manager screen and implemented CRUD functions for task management.
-- **[Other Member Name]**: Built the Habit Tracker and integrated it with Firestore.
+## Team Contributions
+- **Weiwei Liu**: Worked on the Work and Life To-Do list components and integrated task completion toggle functionality with Firestore.
+-                 Developed the MoodTrackerScreen and ToolsScreen, implementing CRUD operations for mood entries in Firestore.
+- **Shuojun Chen**: Set up navigation structure and handled the overall app architecture, ensuring seamless integration between screens and Firebase.
 
 ### Screenshots
-![Mood Tracker Screenshot](path-to-screenshot.png)
 
-### Firebase Setup
-To use the app, ensure you have Firebase set up with the Firestore database. See `firebaseConfig.js` for configuration details.
+#### Tools Screen
+<img width="272" alt="image" src="https://github.com/user-attachments/assets/c2c27b14-cd45-4882-a8c5-67dc385a520f">
 
-### Getting Started
-1. Clone the repository.
-2. Run `npm install` to install dependencies.
-3. Run `npx expo start` to start the app.
 
-### Links
-- [GitHub Repository](https://github.com/your-repo-link)
-- [Video Walkthrough](https://your-video-link)
+#### Work To-Do List
+<img width="278" alt="image" src="https://github.com/user-attachments/assets/75f119a7-dd04-433e-b4de-0a6e03f61183">
 
-## License
-This project is licensed under the MIT License.
+#### Life To-Do List
+<img width="280" alt="image" src="https://github.com/user-attachments/assets/a28baf14-30a9-4e82-818d-6b24a8b79de9">
+
