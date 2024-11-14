@@ -1,44 +1,3 @@
-// // firebaseService.js
-// import { db } from './firebaseConfig';
-
-// // Mood CRUD operations
-// export const addMoodEntry = async (moodEntry) => {
-//   await db.collection('MoodEntries').add(moodEntry);
-// };
-
-// export const getMoodEntries = async () => {
-//   const snapshot = await db.collection('MoodEntries').get();
-//   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-// };
-
-// // Habit CRUD operations
-// export const addHabit = async (habit) => {
-//   await db.collection('Habits').add(habit);
-// };
-
-// export const getHabits = async () => {
-//   const snapshot = await db.collection('Habits').get();
-//   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-// };
-
-// // Task CRUD operations
-// export const addTask = async (task) => {
-//   await db.collection('Tasks').add(task);
-// };
-
-// export const getTasks = async () => {
-//   const snapshot = await db.collection('Tasks').get();
-//   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-// };
-
-// export const deleteTask = async (id) => {
-//   await db.collection('Tasks').doc(id).delete();
-// };
-
-// export const completeTask = async (id) => {
-//   await db.collection('Tasks').doc(id).update({ completed: true });
-// };
-// firebaseService.js
 import { db } from './firebaseConfig';
 import { 
   collection, 
@@ -159,6 +118,27 @@ export const getTools = async () => {
   }
 };
 
+export const updateWorkTodo = async (id, updatedFields) => {
+    try {
+      const todoDocRef = doc(db, 'workTodos', id);
+      await updateDoc(todoDocRef, updatedFields);
+      console.log("Work todo updated successfully!");
+    } catch (error) {
+      console.error("Error updating work todo:", error);
+    }
+  };
+
+  export const updateLifeTodo = async (id, updatedFields) => {
+    try {
+      const todoDocRef = doc(db, 'lifeTodos', id);
+      await updateDoc(todoDocRef, updatedFields);
+      console.log("Life todo updated successfully!");
+    } catch (error) {
+      console.error("Error updating life todo:", error);
+    }
+  };
+
+
 export const addWorkTodo = async (todo) => {
     try {
       await addDoc(workTodosCollectionRef, todo);
@@ -191,7 +171,6 @@ export const addWorkTodo = async (todo) => {
     }
   };
   
-  // Life Todos CRUD
   export const addLifeTodo = async (todo) => {
     try {
       await addDoc(lifeTodosCollectionRef, todo);
