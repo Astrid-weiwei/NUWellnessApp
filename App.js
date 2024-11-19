@@ -1,20 +1,26 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from './screens/HomeScreen';
-import ToolsStackNavigator from './navigators/ToolsStackNavigator';
-import ActivitiesStackNavigator from './navigators/ActivitiesStackNavigator';
+import { createStackNavigator } from '@react-navigation/stack';
+import LoginScreen from './screens/LoginScreen';
+import AppTabs from './navigators/AppTabs'; // Tab Navigator for Home, Tools, and Activities
 
-const Tab = createBottomTabNavigator();
+const Stack = createStackNavigator();
 
 export default function App() {
   return (
     <NavigationContainer>
-      <Tab.Navigator initialRouteName="Home">
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Tools" component={ToolsStackNavigator} />
-        <Tab.Screen name="Activities" component={ActivitiesStackNavigator} />
-      </Tab.Navigator>
+      <Stack.Navigator initialRouteName="Login">
+        <Stack.Screen 
+          name="Login" 
+          component={LoginScreen} 
+          options={{ headerShown: false }} 
+        />
+        <Stack.Screen 
+          name="AppTabs" 
+          component={AppTabs} 
+          options={{ headerShown: false }} 
+        />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
