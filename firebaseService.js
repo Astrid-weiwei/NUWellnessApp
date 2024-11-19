@@ -7,6 +7,43 @@ import {
   deleteDoc, 
   doc 
 } from 'firebase/firestore';
+import { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPassword } from "firebase/auth";
+
+// Initialize Firebase Auth
+const auth = getAuth();
+
+// Register a new user
+export const registerUser = async (email, password) => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Login an existing user
+export const loginUser = async (email, password) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Logout the current user
+export const logoutUser = async () => {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Get the current logged-in user
+export const getCurrentUser = () => auth.currentUser;
+
 
 // Collection references
 const moodCollectionRef = collection(db, 'moodEntries');
