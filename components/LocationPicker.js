@@ -14,13 +14,13 @@ export default function LocationPicker({ onLocationSelected }) {
   };
 
   return (
-    <View>
+    <>
       <TouchableOpacity 
         onPress={() => setModalVisible(true)}
         style={styles.locationButton}
       >
         <Text style={styles.locationButtonText}>
-          {selectedLocation ? 'Change Location' : 'Add Location'}
+          {selectedLocation ? '📍 Change Location' : '📍 Add Location'}
         </Text>
       </TouchableOpacity>
 
@@ -67,13 +67,7 @@ export default function LocationPicker({ onLocationSelected }) {
           </View>
         </View>
       </Modal>
-
-      {selectedLocation && (
-        <Text style={styles.locationText}>
-          Location selected: {selectedLocation.latitude.toFixed(4)}, {selectedLocation.longitude.toFixed(4)}
-        </Text>
-      )}
-    </View>
+    </>
   );
 }
 
@@ -82,11 +76,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#673ab7',
     padding: 10,
     borderRadius: 5,
-    marginVertical: 10,
+    marginBottom: 10,
   },
   locationButtonText: {
     color: '#fff',
     textAlign: 'center',
+    fontSize: 16,
   },
   modalContainer: {
     flex: 1,
@@ -106,18 +101,14 @@ const styles = StyleSheet.create({
     width: '45%',
   },
   cancelButton: {
-    backgroundColor: '#f44336',
+    backgroundColor: '#e57373',
   },
   confirmButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#81c784',
   },
   buttonText: {
     color: '#fff',
     textAlign: 'center',
-  },
-  locationText: {
-    marginTop: 5,
-    color: '#666',
-    textAlign: 'center',
+    fontSize: 16,
   },
 });
