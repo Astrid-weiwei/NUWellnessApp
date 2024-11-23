@@ -3,64 +3,83 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, ActivityIndicat
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 
+// Define wellness location types with their respective icons and colors
+const WELLNESS_TYPES = {
+  GYM: { icon: '💪', color: '#FF5252', label: 'Gym' },
+  PARK: { icon: '🌳', color: '#4CAF50', label: 'Park' },
+  YOGA: { icon: '🧘', color: '#9C27B0', label: 'Yoga Studio' },
+  POOL: { icon: '🏊', color: '#2196F3', label: 'Swimming Pool' },
+  HEALTH_FOOD: { icon: '🥗', color: '#8BC34A', label: 'Health Food Store' },
+  SPORTS: { icon: '⚽', color: '#FFC107', label: 'Sports Facility' },
+  HIKING: { icon: '🥾', color: '#795548', label: 'Hiking Trail' },
+  MEDITATION: { icon: '🧠', color: '#9575CD', label: 'Meditation Center' },
+  WELLNESS_CENTER: { icon: '⭐', color: '#00BCD4', label: 'Wellness Center' },
+};
+
 export default function LocationPicker({ onLocationSelected }) {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedLocations, setSelectedLocations] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [selectedLocationType, setSelectedLocationType] = useState('GYM');
   const mapRef = React.useRef(null);
 
   useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        Alert.alert(
-          'Location Permission Required',
-          'Please enable location services to use this feature',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      try {
-        setLoading(true);
-        let location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        const currentLoc = {
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        };
-        setCurrentLocation(currentLoc);
-      } catch (error) {
-        setErrorMsg('Error getting location');
-        Alert.alert('Error', 'Unable to get your current location');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    getCurrentLocation();
   }, []);
 
-  const handleConfirmLocation = () => {
-    if (selectedLocation) {
-      onLocationSelected(selectedLocation);
-      setModalVisible(false);
+  const getCurrentLocation = async () => {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      setErrorMsg('Permission to access location was denied');
+      Alert.alert(
+        'Location Permission Required',
+        'Please enable location services to use this feature',
+        [{ text: 'OK' }]
+      );
+      return;
     }
-  };
 
-  const goToCurrentLocation = async () => {
-    if (currentLocation) {
-      mapRef.current?.animateToRegion({
-        ...currentLocation,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
+    try {
+      setLoading(true);
+      // Request location with high accuracy and timeout
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 1000,
+        distanceInterval: 1,
       });
+      
+      const currentLoc = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      setCurrentLocation(currentLoc);
+    } catch (error) {
+      setErrorMsg('Error getting location');
+      Alert.alert('Error', 'Unable to get your current location. Please check your GPS settings.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Function to fetch location name using OpenStreetMap Nominatim
+  const handleMapPress = async (e) => {
+    const newLocation = {
+      latitude: e.nativeEvent.coordinate.latitude,
+      longitude: e.nativeEvent.coordinate.longitude,
+      type: selectedLocationType,
+      id: Date.now().toString(), // Unique identifier for each marker
+    };
+    
+    // Get location name
+    const locationName = await getLocationName(newLocation.latitude, newLocation.longitude);
+    
+    setSelectedLocations([...selectedLocations, {
+      ...newLocation,
+      title: `${WELLNESS_TYPES[selectedLocationType].icon} ${locationName}`
+    }]);
+  };
+
   const getLocationName = async (latitude, longitude) => {
     try {
       const response = await fetch(
@@ -74,18 +93,15 @@ export default function LocationPicker({ onLocationSelected }) {
     }
   };
 
-  const handleMapPress = async (e) => {
-    const newLocation = {
-      latitude: e.nativeEvent.coordinate.latitude,
-      longitude: e.nativeEvent.coordinate.longitude,
-    };
-    
-    // Get location name when a point is selected
-    const locationName = await getLocationName(newLocation.latitude, newLocation.longitude);
-    setSelectedLocation({
-      ...newLocation,
-      title: locationName
-    });
+  const handleConfirmLocations = () => {
+    if (selectedLocations.length > 0) {
+      onLocationSelected(selectedLocations);
+      setModalVisible(false);
+    }
+  };
+
+  const removeLocation = (locationId) => {
+    setSelectedLocations(selectedLocations.filter(loc => loc.id !== locationId));
   };
 
   return (
@@ -95,7 +111,7 @@ export default function LocationPicker({ onLocationSelected }) {
         style={styles.locationButton}
       >
         <Text style={styles.locationButtonText}>
-          {selectedLocation ? '📍 Change Location' : '📍 Add Location'}
+          {selectedLocations.length > 0 ? '📍 Edit Wellness Locations' : '📍 Add Wellness Locations'}
         </Text>
       </TouchableOpacity>
 
@@ -113,37 +129,54 @@ export default function LocationPicker({ onLocationSelected }) {
           )}
 
           {currentLocation && (
-            <MapView
-              ref={mapRef}
-              style={styles.map}
-              initialRegion={{
-                ...currentLocation,
-                latitudeDelta: 0.02,
-                longitudeDelta: 0.02,
-              }}
-              onPress={handleMapPress}
-            >
-              {/* Current location marker */}
-              <Marker
-                coordinate={currentLocation}
-                pinColor="blue"
-                title="You are here"
-                description="Your current location"
-              />
+            <>
+              <MapView
+                ref={mapRef}
+                style={styles.map}
+                initialRegion={{
+                  ...currentLocation,
+                  latitudeDelta: 0.02,
+                  longitudeDelta: 0.02,
+                }}
+                onPress={handleMapPress}
+                showsUserLocation={true}
+                showsMyLocationButton={true}
+              >
+                {selectedLocations.map((location) => (
+                  <Marker
+                    key={location.id}
+                    coordinate={{
+                      latitude: location.latitude,
+                      longitude: location.longitude
+                    }}
+                    pinColor={WELLNESS_TYPES[location.type].color}
+                    title={location.title}
+                    description={WELLNESS_TYPES[location.type].label}
+                    onCalloutPress={() => removeLocation(location.id)}
+                  />
+                ))}
+              </MapView>
 
-              {/* Selected location marker */}
-              {selectedLocation && (
-                <Marker
-                  coordinate={{
-                    latitude: selectedLocation.latitude,
-                    longitude: selectedLocation.longitude
-                  }}
-                  pinColor="red"
-                  title={selectedLocation.title}
-                  description="Your selected location"
-                />
-              )}
-            </MapView>
+              <View style={styles.typeSelector}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {Object.entries(WELLNESS_TYPES).map(([type, data]) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.typeButton,
+                        selectedLocationType === type && styles.selectedType,
+                        { backgroundColor: data.color }
+                      ]}
+                      onPress={() => setSelectedLocationType(type)}
+                    >
+                      <Text style={styles.typeButtonText}>
+                        {data.icon} {data.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </>
           )}
           
           <View style={styles.buttonContainer}>
@@ -155,16 +188,16 @@ export default function LocationPicker({ onLocationSelected }) {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              onPress={goToCurrentLocation}
+              onPress={getCurrentLocation}
               style={[styles.button, styles.locationButton]}
             >
-              <Text style={styles.buttonText}>📍 My Location</Text>
+              <Text style={styles.buttonText}>📍 Refresh Location</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              onPress={handleConfirmLocation}
+              onPress={handleConfirmLocations}
               style={[styles.button, styles.confirmButton]}
-              disabled={!selectedLocation}
+              disabled={selectedLocations.length === 0}
             >
               <Text style={styles.buttonText}>Confirm</Text>
             </TouchableOpacity>
@@ -231,5 +264,26 @@ const styles = StyleSheet.create({
     color: '#fff',
     textAlign: 'center',
     fontSize: 16,
+  },
+  typeSelector: {
+    position: 'absolute',
+    top: 20,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 10,
+  },
+  typeButton: {
+    padding: 8,
+    borderRadius: 20,
+    marginHorizontal: 5,
+    opacity: 0.9,
+  },
+  selectedType: {
+    opacity: 1,
+    transform: [{ scale: 1.1 }],
+  },
+  typeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
