@@ -1,15 +1,38 @@
 import { Alert, Button, StyleSheet, Text, View } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import * as Notifications from "expo-notifications";
 
 export default function NotificationManager() {
-  async function verifyPermission() {
+  const [hasPermission, setHasPermission] = useState(false);
+
+  // Check permissions when component mounts
+  useEffect(() => {
+    checkPermissions();
+  }, []);
+
+  async function checkPermissions() {
     try {
       const permissionResponse = await Notifications.getPermissionsAsync();
-      if (permissionResponse.granted) {
-        return true;
-      }
-      const requestedPermission = await Notifications.requestPermissionsAsync();
+      setHasPermission(permissionResponse.granted);
+    } catch (err) {
+      console.log("Check permissions error:", err);
+      setHasPermission(false);
+    }
+  }
+
+  async function verifyPermission() {
+    try {
+      if (hasPermission) return true;
+      
+      const requestedPermission = await Notifications.requestPermissionsAsync({
+        ios: {
+          allowAlert: true,
+          allowBadge: true,
+          allowSound: true,
+        },
+      });
+      
+      setHasPermission(requestedPermission.granted);
       return requestedPermission.granted;
     } catch (err) {
       console.log("Verify permission error:", err);
@@ -17,90 +40,82 @@ export default function NotificationManager() {
     }
   }
 
-  async function scheduleDailyWellnessReminder() {
+  async function scheduleNotification(config) {
     try {
-      const hasPermission = await verifyPermission();
-      if (!hasPermission) {
+      const permitted = await verifyPermission();
+      if (!permitted) {
         Alert.alert(
           "Permission Required",
-          "Please enable notifications to receive wellness reminders"
+          `Please enable notifications to receive ${config.type} reminders`
         );
         return;
       }
 
+      // Cancel existing notifications of this type
+      const existingNotifications = await Notifications.getAllScheduledNotificationsAsync();
+      const typeNotifications = existingNotifications.filter(
+        notification => notification.content.data?.type === config.type
+      );
+      
+      for (const notification of typeNotifications) {
+        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+      }
+
+      // Schedule new notification
       await Notifications.scheduleNotificationAsync({
         content: {
-          title: "Wellness Check-in Time",
-          body: "Take a moment to track your mood and wellness activities",
-          data: { screen: 'MoodTrackerScreen' },
+          title: config.title,
+          body: config.body,
+          data: { 
+            screen: config.screen,
+            type: config.type 
+          },
+          sound: true,
         },
         trigger: {
-          hours: 24, // Daily reminder
-          repeats: true
+          hours: config.hours,
+          repeats: true,
         },
       });
-      Alert.alert("Success", "Daily wellness reminder set!");
+
+      Alert.alert("Success", `${config.type} reminder set!`);
     } catch (err) {
-      console.log("Schedule notification error:", err);
-      Alert.alert("Error", "Failed to set reminder");
+      console.log(`Schedule ${config.type} notification error:`, err);
+      Alert.alert("Error", `Failed to set ${config.type} reminder`);
     }
   }
 
-  async function scheduleTaskReminder() {
+  const notificationConfigs = {
+    wellness: {
+      type: 'mood tracker',
+      title: "Wellness Check-in Time",
+      body: "Take a moment to track your mood and wellness activities",
+      screen: 'MoodTrackerScreen',
+      hours: 24,
+    },
+    task: {
+      type: 'task',
+      title: "Task Reminder",
+      body: "Check your pending tasks and stay organized!",
+      screen: 'TaskManagerScreen',
+      hours: 12,
+    },
+    meditation: {
+      type: 'meditation',
+      title: "Meditation Time",
+      body: "Take a peaceful break for meditation",
+      screen: 'MeditationScreen',
+      hours: 8,
+    },
+  };
+
+  async function cancelAllReminders() {
     try {
-      const hasPermission = await verifyPermission();
-      if (!hasPermission) {
-        Alert.alert(
-          "Permission Required",
-          "Please enable notifications to receive task reminders"
-        );
-        return;
-      }
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Task Reminder",
-          body: "Check your pending tasks and stay organized!",
-          data: { screen: 'TaskManagerScreen' },
-        },
-        trigger: {
-          hours: 12, // Twice daily reminder
-          repeats: true
-        },
-      });
-      Alert.alert("Success", "Task reminder set!");
+      await Notifications.cancelAllScheduledNotificationsAsync();
+      Alert.alert("Success", "All reminders have been cancelled");
     } catch (err) {
-      console.log("Schedule task notification error:", err);
-      Alert.alert("Error", "Failed to set task reminder");
-    }
-  }
-
-  async function scheduleMeditationReminder() {
-    try {
-      const hasPermission = await verifyPermission();
-      if (!hasPermission) {
-        Alert.alert(
-          "Permission Required",
-          "Please enable notifications for meditation reminders"
-        );
-        return;
-      }
-
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "Meditation Time",
-          body: "Take a peaceful break for meditation",
-          data: { screen: 'MeditationScreen' },
-        },
-        trigger: {
-          hours: 8, // Three times daily reminder
-          repeats: true
-        },
-      });
-      Alert.alert("Success", "Meditation reminder set!");
-    } catch (err) {
-      console.log("Schedule meditation notification error:", err);
-      Alert.alert("Error", "Failed to set meditation reminder");
+      console.log("Cancel notifications error:", err);
+      Alert.alert("Error", "Failed to cancel reminders");
     }
   }
 
@@ -111,23 +126,37 @@ export default function NotificationManager() {
       <View style={styles.buttonContainer}>
         <Button
           title="Set Daily Wellness Reminder"
-          onPress={scheduleDailyWellnessReminder}
+          onPress={() => scheduleNotification(notificationConfigs.wellness)}
         />
       </View>
 
       <View style={styles.buttonContainer}>
         <Button
           title="Set Task Reminder"
-          onPress={scheduleTaskReminder}
+          onPress={() => scheduleNotification(notificationConfigs.task)}
         />
       </View>
 
       <View style={styles.buttonContainer}>
         <Button
           title="Set Meditation Reminder"
-          onPress={scheduleMeditationReminder}
+          onPress={() => scheduleNotification(notificationConfigs.meditation)}
         />
       </View>
+
+      <View style={[styles.buttonContainer, styles.cancelButton]}>
+        <Button
+          title="Cancel All Reminders"
+          onPress={cancelAllReminders}
+          color="#ff4444"
+        />
+      </View>
+
+      {!hasPermission && (
+        <Text style={styles.permissionWarning}>
+          ⚠️ Notifications are currently disabled. Please enable them in your device settings.
+        </Text>
+      )}
     </View>
   );
 }
@@ -145,5 +174,14 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginVertical: 10,
+  },
+  cancelButton: {
+    marginTop: 30,
+  },
+  permissionWarning: {
+    color: '#ff4444',
+    textAlign: 'center',
+    marginTop: 20,
+    paddingHorizontal: 20,
   }
 });
