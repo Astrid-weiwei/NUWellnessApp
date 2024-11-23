@@ -334,13 +334,13 @@ export default function MoodTrackerScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.entryContainer}>
-            <Text>
+            <View style={{ flexDirection: 'row' }}>
               <Text>{item.timestamp || ''}</Text>
               <Text>: </Text>
               <Text>{item.mood || ''}</Text>
               <Text> - </Text>
               <Text>{item.journal || ''}</Text>
-            </Text>
+            </View>
  
             {item.imageUri && (
               <Image
