@@ -8,7 +8,8 @@ export default function MoodTrackerScreen() {
   const [journal, setJournal] = useState('');
   const [entries, setEntries] = useState([]);
   const [selectedMood, setSelectedMood] = useState(null);
-  const [imageUri, setImageUri] = useState(null); // Store the image URI
+  const [imageUri, setImageUri] = useState(null);
+  const [location, setLocation] = useState(null);
 
   const moods = [
     { label: 'Bad', color: '#e57373' },
