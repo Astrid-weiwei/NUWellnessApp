@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -283,25 +283,99 @@ const LocationPicker = ({ onLocationSelected }) => {
   const [loading, setLoading] = useState(false);
   const [selectedLocationType, setSelectedLocationType] = useState('GYM');
   const [mapReady, setMapReady] = useState(false);
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const mapRef = React.useRef(null);
+  const locationSubscription = useRef(null);
 
   useEffect(() => {
     (async () => {
       await loadCache();
-      await getCurrentLocation();
+      await requestLocationPermission();
     })();
+
+    // Cleanup subscription when component unmounts
+    return () => {
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+      }
+    };
   }, []);
 
+  const requestLocationPermission = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setHasLocationPermission(status === 'granted');
+      
+      if (status === 'granted') {
+        startLocationUpdates();
+      } else {
+        Alert.alert(
+          'Location Permission Required',
+          'Using default Vancouver location. Enable location services for real-time updates.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.warn('Error requesting location permission:', error);
+      Alert.alert(
+        'Permission Error',
+        'Unable to request location permission. Using Vancouver as default.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const startLocationUpdates = async () => {
+    try {
+      // First get initial location
+      const initialLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      
+      updateCurrentLocation(initialLocation.coords);
+
+      // Then start watching location
+      locationSubscription.current = await Location.watchPositionAsync(
+        {
+          accuracy: Location.Accuracy.Balanced,
+          timeInterval: 10000, // Update every 10 seconds
+          distanceInterval: 10, // Update every 10 meters
+        },
+        (location) => {
+          updateCurrentLocation(location.coords);
+        }
+      );
+    } catch (error) {
+      console.warn('Error starting location updates:', error);
+      Alert.alert(
+        'Location Error',
+        'Unable to track location. Using last known or default location.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  const updateCurrentLocation = (coords) => {
+    const newLocation = {
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      latitudeDelta: 0.05,
+      longitudeDelta: 0.05,
+    };
+    
+    setCurrentLocation(newLocation);
+    
+    if (mapRef.current && mapReady && modalVisible) {
+      mapRef.current.animateToRegion(newLocation, 1000);
+    }
+  };
+  // getCurrentLocation uses the real-time tracking system
   const getCurrentLocation = async () => {
     try {
       setLoading(true);
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Location Permission Required',
-          'Using default Vancouver location. Enable location services for current location.',
-          [{ text: 'OK' }]
-        );
+      
+      if (!hasLocationPermission) {
+        await requestLocationPermission();
         return;
       }
 
@@ -309,23 +383,12 @@ const LocationPicker = ({ onLocationSelected }) => {
         accuracy: Location.Accuracy.Balanced,
       });
       
-      const currentLoc = {
-        latitude: Number(location.coords.latitude),
-        longitude: Number(location.coords.longitude),
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
-      };
-      
-      setCurrentLocation(currentLoc);
-      
-      if (mapRef.current && mapReady) {
-        mapRef.current.animateToRegion(currentLoc, 1000);
-      }
+      updateCurrentLocation(location.coords);
     } catch (error) {
-      console.warn('Error getting location:', error);
+      console.warn('Error getting current location:', error);
       Alert.alert(
-        'Location Error', 
-        'Using Vancouver as default location.',
+        'Location Error',
+        'Unable to get current location. Using default location.',
         [{ text: 'OK' }]
       );
     } finally {
@@ -411,7 +474,12 @@ const LocationPicker = ({ onLocationSelected }) => {
   return (
     <>
       <TouchableOpacity 
-        onPress={() => setModalVisible(true)}
+        onPress={() => {
+          setModalVisible(true);
+          if (hasLocationPermission) {
+            getCurrentLocation();
+          }
+        }}
         style={styles.locationButton}
       >
         <Text style={styles.locationButtonText}>
@@ -423,7 +491,9 @@ const LocationPicker = ({ onLocationSelected }) => {
         animationType="slide"
         transparent={false}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => {
+          setModalVisible(false);
+        }}
       >
         <View style={styles.modalContainer}>
           {loading && (
@@ -437,7 +507,8 @@ const LocationPicker = ({ onLocationSelected }) => {
               ref={mapRef}
               style={styles.map}
               provider={PROVIDER_DEFAULT}
-              initialRegion={VANCOUVER_REGION}
+              initialRegion={currentLocation}
+              region={currentLocation}
               onPress={handleMapPress}
               showsUserLocation
               showsMyLocationButton
