@@ -19,11 +19,11 @@ The app is structured with React Navigation to handle screen transitions between
 - **WorkScreen**: Manages the to-do list for work-related tasks.
 - **LifeScreen**: Manages the to-do list for personal life tasks.
 - **ToolsScreen**: Contains access to all the tools listed above for mental well-being.
-  - **MoodTrackerScreen**: Allows users to record and view their mood entries along with a journal, a photo, and a location.
+  - **MoodTrackerScreen**: Allows users to record and view their mood entries along with a journal, a photo, and a location. A daily reminder is also implemented.
     - **Take Photo**: Direct to the camera with asking permission
     - **Edit Wellness Locations**: Direct to a local map with different kinds of markers.
   - **ChallengingNegativeThoughtsScreen**: Helps users analyze and manage their thoughts with guided questions.
-  - **MeditationScreen**: Provides simple meditation exercises.
+  - **MeditationScreen**: Provides simple meditation exercises with a daily reminder.
   - **SelfAssessmentScreen**: Allows users to take self-assessment questionnaires (e.g., PHQ-9, GAD-7).
   
 ### Navigation
@@ -70,6 +70,8 @@ The app integrates with Firebase Firestore to implement CRUD operations for each
      - `mood` (string): Mood label (e.g., "Good, "Poor").
      - `journal` (string): Journal entry text.
      - `timestamp` (datetime): Date and time of the mood entry.
+     - `photo` (object, optional): the photo taken by the user.
+     - `location` (array, optional): markers on local map to display wellness activities.
    - **Operations**:
      - **Create**: Add new mood entries.
      - **Read**: Display existing mood entries.
@@ -97,4 +99,16 @@ The app integrates with Firebase Firestore to implement CRUD operations for each
 
 #### Life To-Do List
 <img width="280" alt="image" src="https://github.com/user-attachments/assets/a28baf14-30a9-4e82-818d-6b24a8b79de9">
+
+#### Mood Tracker Screen
+<img width="280" alt="image" src="https://github.com/Astrid-weiwei/NUWellnessApp/blob/iteration2-new/assets/MoodTrackerScreen.jpg">
+
+#### Map and Location for Moodtracker Entry
+<img width="280" alt="image" src="https://github.com/Astrid-weiwei/NUWellnessApp/blob/iteration2-new/assets/Map%20and%20Location.jpg">
+
+#### Login Screen
+<img width="280" alt="image" src="https://github.com/Astrid-weiwei/NUWellnessApp/blob/iteration2-new/assets/LoginScreen.jpg">
+
+#### Meditation Screen
+<img width="280" alt="image" src="https://github.com/Astrid-weiwei/NUWellnessApp/blob/iteration2-new/assets/MeditationScreen.jpg">
 
