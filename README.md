@@ -19,7 +19,9 @@ The app is structured with React Navigation to handle screen transitions between
 - **WorkScreen**: Manages the to-do list for work-related tasks.
 - **LifeScreen**: Manages the to-do list for personal life tasks.
 - **ToolsScreen**: Contains access to all the tools listed above for mental well-being.
-  - **MoodTrackerScreen**: Allows users to record and view their mood entries along with a journal.
+  - **MoodTrackerScreen**: Allows users to record and view their mood entries along with a journal, a photo, and a location.
+    - **Take Photo**: Direct to the camera with asking permission
+    - **Edit Wellness Locations**: Direct to a local map with different kinds of markers.
   - **ChallengingNegativeThoughtsScreen**: Helps users analyze and manage their thoughts with guided questions.
   - **MeditationScreen**: Provides simple meditation exercises.
   - **SelfAssessmentScreen**: Allows users to take self-assessment questionnaires (e.g., PHQ-9, GAD-7).
@@ -33,7 +35,7 @@ The app uses two main navigators:
 The app integrates with Firebase Firestore to implement CRUD operations for each data collection:
 1. **WorkTodos**: Supports Create, Read, Update (completion status), and Delete for work-related tasks.
 2. **LifeTodos**: Supports Create, Read, Update (completion status), and Delete for personal tasks.
-3. **MoodEntries**: Supports Create, Read, and Delete for mood entries with journaling functionality.
+3. **MoodEntries**: Supports Create, Read, and Delete for mood entries with journaling， photo taken, and location marking functionalities.
 
 ---
 
@@ -65,7 +67,7 @@ The app integrates with Firebase Firestore to implement CRUD operations for each
 3. **MoodEntries**
    - **Fields**:
      - `id` (string): Document ID.
-     - `mood` (string): Mood label (e.g., "Happy", "Sad").
+     - `mood` (string): Mood label (e.g., "Good, "Poor").
      - `journal` (string): Journal entry text.
      - `timestamp` (datetime): Date and time of the mood entry.
    - **Operations**:
@@ -78,7 +80,11 @@ The app integrates with Firebase Firestore to implement CRUD operations for each
 ## Team Contributions
 - **Weiwei Liu**: Worked on the Work and Life To-Do list components and integrated task completion toggle functionality with Firestore.
 -                 Developed the MoodTrackerScreen and ToolsScreen, implementing CRUD operations for mood entries in Firestore.
+-                 Developed the camera function in MoodTrackerScreen.
 - **Shuojun Chen**: Set up navigation structure and handled the overall app architecture, ensuring seamless integration between screens and Firebase.
+-                  Complete the core features, error handlings, and branding for the login screen.
+-                  Implement the notification function for mood tracker and meditation.
+-                  Developed the map/location function for new entries in the mood tracker. 
 
 ### Screenshots
 
