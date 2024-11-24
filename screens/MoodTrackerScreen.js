@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, I
 import ImageManager from '../components/ImageManager';
 import LocationPicker from '../components/LocationPicker';
 import { addMoodEntry, getMoodEntries, deleteMoodEntry } from '../firebaseService';
+import * as Notifications from "expo-notifications";
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function MoodTrackerScreen() {
   const [journal, setJournal] = useState('');
@@ -10,6 +12,8 @@ export default function MoodTrackerScreen() {
   const [selectedMood, setSelectedMood] = useState(null);
   const [imageUri, setImageUri] = useState(null);
   const [locations, setLocations] = useState([]);
+  const [reminderTime, setReminderTime] = useState(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const moods = [
     { label: 'Bad', color: '#e57373' },
@@ -79,7 +83,6 @@ export default function MoodTrackerScreen() {
 
   const renderLocationList = (locations) => {
     if (!locations || locations.length === 0) return null;
-
     return (
       <View style={styles.locationsList}>
         {locations.map((loc, index) => (
@@ -93,7 +96,6 @@ export default function MoodTrackerScreen() {
 
   const renderEntry = ({ item }) => {
     if (!item) return null;
-
     return (
       <View style={styles.entryContainer}>
         <View style={styles.entryHeader}>
@@ -126,9 +128,123 @@ export default function MoodTrackerScreen() {
     );
   };
 
+  const showTimePickerModal = () => {
+    setShowTimePicker(true);
+  };
+
+  const handleTimeSelected = async (event, selectedTime) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      setupDailyReminder(selectedTime);
+    }
+  };
+
+  // To handle setting up the reminder
+  const setupDailyReminder = async (time) => {
+    try {
+      const permission = await Notifications.getPermissionsAsync();
+      if (!permission.granted) {
+        const request = await Notifications.requestPermissionsAsync();
+        if (!request.granted) {
+          Alert.alert('Permission Required', 'Please enable notifications to set reminders');
+          return;
+        }
+      }
+
+      // Cancel any existing mood tracker notifications
+      const notifications = await Notifications.getAllScheduledNotificationsAsync();
+      const moodNotifications = notifications.filter(
+        n => n.content.data?.type === 'mood tracker'
+      );
+      for (const notification of moodNotifications) {
+        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+      }
+
+      // Schedule new notification
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Wellness Check-in Time",
+          body: "Take a moment to track your mood and wellness activities",
+          data: { screen: 'Mood Tracker', type: 'mood tracker' },
+        },
+        trigger: {
+          hour: time.getHours(),
+          minute: time.getMinutes(),
+          repeats: true,
+        },
+      });
+
+      setReminderTime(time);
+      Alert.alert(
+        'Reminder Set',
+        `Daily reminder set for ${time.toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
+        })}`
+      );
+    } catch (error) {
+      console.error('Error setting reminder:', error);
+      Alert.alert('Error', 'Failed to set reminder');
+    }
+  };
+
+  const cancelReminder = async () => {
+    try {
+      const notifications = await Notifications.getAllScheduledNotificationsAsync();
+      const moodNotifications = notifications.filter(
+        n => n.content.data?.type === 'mood tracker'
+      );
+      for (const notification of moodNotifications) {
+        await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+      }
+      setReminderTime(null);
+      Alert.alert('Success', 'Reminder cancelled');
+    } catch (error) {
+      console.error('Error cancelling reminder:', error);
+      Alert.alert('Error', 'Failed to cancel reminder');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Mood Tracker</Text>
+
+      {/* Reminder Section */}
+      <View style={styles.reminderSection}>
+        {reminderTime ? (
+          <View style={styles.activeReminder}>
+            <Text style={styles.reminderText}>
+              Reminder set for {reminderTime.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </Text>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={cancelReminder}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.setReminderButton}
+            onPress={showTimePickerModal}
+          >
+            <Text style={styles.setReminderText}>Set Daily Reminder</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {showTimePicker && (
+        <DateTimePicker
+          value={reminderTime || new Date()}
+          mode="time"
+          is24Hour={false}
+          display="default"
+          onChange={handleTimeSelected}
+        />
+      )}
       
       <View style={styles.moodContainer}>
         {moods.map((m) => (
@@ -298,5 +414,41 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  reminderSection: {
+    marginBottom: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+  },
+  activeReminder: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+  },
+  reminderText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  setReminderButton: {
+    backgroundColor: '#007AFF',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  setReminderText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    backgroundColor: '#ff4444',
+    padding: 8,
+    borderRadius: 6,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
