@@ -15,15 +15,16 @@ This React Native app helps users manage their to-do lists for work and personal
 
 ## Components and Structure
 The app is structured with React Navigation to handle screen transitions between the main pages:
+- **LoginScreen**: Handles autentication,
 - **HomeScreen**: Displays quick views for navigating to key functionalities like Work and Life To-Do lists, Mood Tracker, and other tools.
 - **WorkScreen**: Manages the to-do list for work-related tasks.
 - **LifeScreen**: Manages the to-do list for personal life tasks.
 - **ToolsScreen**: Contains access to all the tools listed above for mental well-being.
-  - **MoodTrackerScreen**: Allows users to record and view their mood entries along with a journal, a photo, and a location. A daily reminder is also implemented.
+  - **MoodTrackerScreen**: Allows users to record and view their mood entries along with a journal, a photo, and a location. A daily reminder(notification) is also implemented.
     - **Take Photo**: Direct to the camera with asking permission
-    - **Edit Wellness Locations**: Direct to a local map with different kinds of markers.
+    - **Edit Wellness Locations**: Direct to a local map with different kinds of markers. OpenStreetMap API used. 
   - **ChallengingNegativeThoughtsScreen**: Helps users analyze and manage their thoughts with guided questions.
-  - **MeditationScreen**: Provides simple meditation exercises with a daily reminder.
+  - **MeditationScreen**: Provides simple meditation exercises with a daily reminder(notification).
   - **SelfAssessmentScreen**: Allows users to take self-assessment questionnaires (e.g., PHQ-9, GAD-7).
   
 ### Navigation
