@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, ActivityIndicat
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { WELLNESS_TYPES } from '../constants/wellness';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Vancouver coordinates
 const VANCOUVER_REGION = {
@@ -10,6 +11,269 @@ const VANCOUVER_REGION = {
   longitude: -123.1207,
   latitudeDelta: 0.05,
   longitudeDelta: 0.05,
+};
+
+// Cache common Vancouver areas
+const VANCOUVER_AREAS_CACHE = {
+  // Vancouver
+  'downtown': {
+    bounds: { minLat: 49.277, maxLat: 49.289, minLng: -123.138, maxLng: -123.108 },
+    name: 'Downtown Vancouver'
+  },
+  'west_end': {
+    bounds: { minLat: 49.280, maxLat: 49.290, minLng: -123.149, maxLng: -123.129 },
+    name: 'West End'
+  },
+  'yaletown': {
+    bounds: { minLat: 49.269, maxLat: 49.279, minLng: -123.128, maxLng: -123.115 },
+    name: 'Yaletown'
+  },
+  'gastown': {
+    bounds: { minLat: 49.282, maxLat: 49.285, minLng: -123.112, maxLng: -123.104 },
+    name: 'Gastown'
+  },
+  'coal_harbour': {
+    bounds: { minLat: 49.287, maxLat: 49.292, minLng: -123.130, maxLng: -123.118 },
+    name: 'Coal Harbour'
+  },
+  'kitsilano': {
+    bounds: { minLat: 49.259, maxLat: 49.272, minLng: -123.185, maxLng: -123.148 },
+    name: 'Kitsilano'
+  },
+  'mount_pleasant': {
+    bounds: { minLat: 49.257, maxLat: 49.268, minLng: -123.113, maxLng: -123.077 },
+    name: 'Mount Pleasant'
+  },
+  'false_creek': {
+    bounds: { minLat: 49.265, maxLat: 49.273, minLng: -123.134, maxLng: -123.105 },
+    name: 'False Creek'
+  },
+  'west_point_grey': {
+    bounds: { minLat: 49.261, maxLat: 49.276, minLng: -123.209, maxLng: -123.185 },
+    name: 'West Point Grey'
+  },
+
+  // North Vancouver
+  'lower_lonsdale': {
+    bounds: { minLat: 49.308, maxLat: 49.315, minLng: -123.082, maxLng: -123.071 },
+    name: 'Lower Lonsdale'
+  },
+  'lynn_valley': {
+    bounds: { minLat: 49.337, maxLat: 49.352, minLng: -123.047, maxLng: -123.019 },
+    name: 'Lynn Valley'
+  },
+
+  // Burnaby
+  'metrotown': {
+    bounds: { minLat: 49.223, maxLat: 49.232, minLng: -123.008, maxLng: -122.997 },
+    name: 'Metrotown'
+  },
+  'brentwood': {
+    bounds: { minLat: 49.265, maxLat: 49.272, minLng: -123.002, maxLng: -122.989 },
+    name: 'Brentwood'
+  },
+  'burnaby_heights': {
+    bounds: { minLat: 49.281, maxLat: 49.289, minLng: -123.022, maxLng: -122.999 },
+    name: 'Burnaby Heights'
+  },
+
+  // Richmond
+  'steveston': {
+    bounds: { minLat: 49.121, maxLat: 49.134, minLng: -123.195, maxLng: -123.176 },
+    name: 'Steveston'
+  },
+  'richmond_centre': {
+    bounds: { minLat: 49.163, maxLat: 49.172, minLng: -123.144, maxLng: -123.130 },
+    name: 'Richmond Centre'
+  },
+
+  // Surrey
+  'surrey_central': {
+    bounds: { minLat: 49.186, maxLat: 49.194, minLng: -122.851, maxLng: -122.837 },
+    name: 'Surrey Central'
+  },
+  'guildford': {
+    bounds: { minLat: 49.187, maxLat: 49.195, minLng: -122.805, maxLng: -122.789 },
+    name: 'Guildford'
+  },
+  'fleetwood': {
+    bounds: { minLat: 49.152, maxLat: 49.167, minLng: -122.799, maxLng: -122.773 },
+    name: 'Fleetwood'
+  },
+
+  // New Westminster
+  'downtown_new_west': {
+    bounds: { minLat: 49.199, maxLat: 49.206, minLng: -122.915, maxLng: -122.905 },
+    name: 'Downtown New Westminster'
+  },
+  'queensborough': {
+    bounds: { minLat: 49.181, maxLat: 49.191, minLng: -122.953, maxLng: -122.930 },
+    name: 'Queensborough'
+  },
+
+  // Coquitlam
+  'coquitlam_centre': {
+    bounds: { minLat: 49.274, maxLat: 49.283, minLng: -122.802, maxLng: -122.789 },
+    name: 'Coquitlam Centre'
+  },
+  'port_coquitlam': {
+    bounds: { minLat: 49.256, maxLat: 49.266, minLng: -122.775, maxLng: -122.755 },
+    name: 'Port Coquitlam'
+  },
+
+  // Port Moody
+  'port_moody_centre': {
+    bounds: { minLat: 49.276, maxLat: 49.284, minLng: -122.866, maxLng: -122.825 },
+    name: 'Port Moody'
+  },
+
+  // West Vancouver
+  'park_royal': {
+    bounds: { minLat: 49.321, maxLat: 49.327, minLng: -123.140, maxLng: -123.128 },
+    name: 'Park Royal'
+  },
+  'horseshoe_bay': {
+    bounds: { minLat: 49.369, maxLat: 49.377, minLng: -123.279, maxLng: -123.269 },
+    name: 'Horseshoe Bay'
+  },
+
+  // Delta
+  'tsawwassen': {
+    bounds: { minLat: 49.002, maxLat: 49.018, minLng: -123.090, maxLng: -123.074 },
+    name: 'Tsawwassen'
+  },
+  'ladner': {
+    bounds: { minLat: 49.084, maxLat: 49.094, minLng: -123.088, maxLng: -123.075 },
+    name: 'Ladner'
+  },
+
+  // White Rock
+  'white_rock': {
+    bounds: { minLat: 49.015, maxLat: 49.025, minLng: -122.806, maxLng: -122.785 },
+    name: 'White Rock'
+  },
+
+  // Langley
+  'langley_city': {
+    bounds: { minLat: 49.100, maxLat: 49.108, minLng: -122.666, maxLng: -122.650 },
+    name: 'Langley City'
+  },
+  'walnut_grove': {
+    bounds: { minLat: 49.163, maxLat: 49.172, minLng: -122.645, maxLng: -122.625 },
+    name: 'Walnut Grove'
+  },
+
+  // Maple Ridge
+  'maple_ridge': {
+    bounds: { minLat: 49.215, maxLat: 49.224, minLng: -122.605, maxLng: -122.588 },
+    name: 'Maple Ridge'
+  },
+  'pitt_meadows': {
+    bounds: { minLat: 49.221, maxLat: 49.229, minLng: -122.695, maxLng: -122.676 },
+    name: 'Pitt Meadows'
+  }
+};
+
+const isInBounds = (lat, lng, bounds) => {
+  return lat >= bounds.minLat && 
+         lat <= bounds.maxLat && 
+         lng >= bounds.minLng && 
+         lng <= bounds.maxLng;
+};
+
+const getLocationNameFromCache = (latitude, longitude) => {
+  for (const [area, data] of Object.entries(VANCOUVER_AREAS_CACHE)) {
+    if (isInBounds(latitude, longitude, data.bounds)) {
+      return data.name;
+    }
+  }
+  return null;
+};
+
+const CACHE_KEY = 'locationNameCache';
+let locationCache = new Map();
+
+const loadCache = async () => {
+  try {
+    const cached = await AsyncStorage.getItem(CACHE_KEY);
+    if (cached) {
+      locationCache = new Map(JSON.parse(cached));
+    }
+  } catch (error) {
+    console.warn('Error loading location cache:', error);
+  }
+};
+
+const saveCache = async () => {
+  try {
+    await AsyncStorage.setItem(CACHE_KEY, JSON.stringify([...locationCache]));
+  } catch (error) {
+    console.warn('Error saving location cache:', error);
+  }
+};
+
+const getCacheKey = (lat, lng) => {
+  const roundedLat = Math.round(lat * 1000) / 1000;
+  const roundedLng = Math.round(lng * 1000) / 1000;
+  return `${roundedLat},${roundedLng}`;
+};
+
+const fetchLocationName = async (latitude, longitude) => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+      {
+        headers: {
+          'User-Agent': 'MoodTrackerApp/1.0',
+          'Accept-Language': 'en'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Location service unavailable');
+    }
+
+    const data = await response.json();
+    let locationName = 'Selected Location';
+
+    if (data.address) {
+      const { road, neighbourhood, suburb, city } = data.address;
+      locationName = [road, neighbourhood, suburb, city]
+        .filter(Boolean)
+        .slice(0, 2)
+        .join(', ') || 'Selected Location';
+    }
+
+    return locationName;
+  } catch (error) {
+    console.warn('Error fetching location name:', error);
+    return 'Selected Location';
+  }
+};
+
+const getLocationName = async (latitude, longitude) => {
+  // First check predefined areas
+  const areaName = getLocationNameFromCache(latitude, longitude);
+  if (areaName) {
+    return areaName;
+  }
+
+  // Then check cached locations
+  const cacheKey = getCacheKey(latitude, longitude);
+  const cachedName = locationCache.get(cacheKey);
+  if (cachedName) {
+    return cachedName;
+  }
+
+  // If not in cache, fetch from API
+  const locationName = await fetchLocationName(latitude, longitude);
+  
+  // Cache the result
+  locationCache.set(cacheKey, locationName);
+  saveCache();
+
+  return locationName;
 };
 
 const LocationPicker = ({ onLocationSelected }) => {
@@ -22,13 +286,16 @@ const LocationPicker = ({ onLocationSelected }) => {
   const mapRef = React.useRef(null);
 
   useEffect(() => {
-    getCurrentLocation();
+    (async () => {
+      await loadCache();
+      await getCurrentLocation();
+    })();
   }, []);
 
   const getCurrentLocation = async () => {
     try {
       setLoading(true);
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(
           'Location Permission Required',
@@ -48,6 +315,7 @@ const LocationPicker = ({ onLocationSelected }) => {
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
       };
+      
       setCurrentLocation(currentLoc);
       
       if (mapRef.current && mapReady) {
@@ -69,8 +337,7 @@ const LocationPicker = ({ onLocationSelected }) => {
     try {
       const { latitude, longitude } = e.nativeEvent.coordinate;
       
-      // Ensure coordinates are valid numbers
-      if (typeof latitude !== 'number' || typeof longitude !== 'number') {
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         throw new Error('Invalid coordinates');
       }
 
@@ -98,26 +365,12 @@ const LocationPicker = ({ onLocationSelected }) => {
     }
   };
 
-  const getLocationName = async (latitude, longitude) => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
-      );
-      const data = await response.json();
-      return data.display_name || 'Selected Location';
-    } catch (error) {
-      return 'Selected Location';
-    }
-  };
-
   const handleConfirmLocations = () => {
     try {
-      // Validate locations before saving
       const validLocations = selectedLocations.map(location => ({
         ...location,
         latitude: Number(location.latitude),
         longitude: Number(location.longitude),
-        // Ensure these are formatted properly for display
         latitudeStr: location.latitude.toFixed(6),
         longitudeStr: location.longitude.toFixed(6),
       }));
@@ -145,11 +398,8 @@ const LocationPicker = ({ onLocationSelected }) => {
       'Delete Location',
       'Do you want to remove this location?',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
+        { text: 'Cancel', style: 'cancel' },
+        { 
           text: 'Delete',
           onPress: () => removeLocation(locationId),
           style: 'destructive'
@@ -263,7 +513,7 @@ const LocationPicker = ({ onLocationSelected }) => {
       </Modal>
     </>
   );
-}
+};
 
 const styles = StyleSheet.create({
   locationButton: {
