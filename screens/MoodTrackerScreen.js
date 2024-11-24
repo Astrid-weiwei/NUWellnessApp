@@ -5,6 +5,7 @@ import LocationPicker from '../components/LocationPicker';
 import { addMoodEntry, getMoodEntries, deleteMoodEntry } from '../firebaseService';
 import * as Notifications from "expo-notifications";
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { WELLNESS_TYPES } from '../constants/wellness';
 
 export default function MoodTrackerScreen() {
   const [journal, setJournal] = useState('');
@@ -72,25 +73,28 @@ export default function MoodTrackerScreen() {
   };
 
   const handleDelete = async (id) => {
-    try {
-      await deleteMoodEntry(id);
-      fetchEntries();
-    } catch (error) {
-      console.error('Error deleting entry:', error);
-      Alert.alert('Error', 'Failed to delete entry');
-    }
-  };
-
-  const renderLocationList = (locations) => {
-    if (!locations || locations.length === 0) return null;
-    return (
-      <View style={styles.locationsList}>
-        {locations.map((loc, index) => (
-          <Text key={loc.id || index} style={styles.locationText}>
-            📍 {loc.title || 'Location'}: {Number(loc.latitude).toFixed(4)}, {Number(loc.longitude).toFixed(4)}
-          </Text>
-        ))}
-      </View>
+    Alert.alert(
+      'Delete Entry',
+      'Are you sure you want to delete this entry?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          onPress: async () => {
+            try {
+              await deleteMoodEntry(id);
+              fetchEntries();
+            } catch (error) {
+              console.error('Error deleting entry:', error);
+              Alert.alert('Error', 'Failed to delete entry');
+            }
+          },
+          style: 'destructive'
+        }
+      ]
     );
   };
 
@@ -109,7 +113,21 @@ export default function MoodTrackerScreen() {
 
         <Text style={styles.journalText}>{item.journal}</Text>
 
-        {renderLocationList(item.locations)}
+        {item.locations && item.locations.length > 0 && (
+          <View style={styles.locationWrapper}>
+            <Text style={styles.locationHeader}>Wellness Locations:</Text>
+            {item.locations.map((loc, index) => {
+              const type = loc.type || 'WELLNESS_CENTER';
+              return (
+                <View key={index} style={styles.locationItemContainer}>
+                  <Text style={styles.locationItem}>
+                    {WELLNESS_TYPES[type].icon} {WELLNESS_TYPES[type].label}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
 
         {item.imageUri && (
           <Image
@@ -319,9 +337,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedMoodButton: {
-    transform: [{ scale: 1.1 }],
     borderWidth: 2,
     borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.84,
+    elevation: 4,
   },
   moodButtonText: {
     color: '#fff',
@@ -450,5 +472,27 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  locationWrapper: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+  },
+  locationHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 5,
+  },
+  locationItemContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  locationItem: {
+    fontSize: 14,
+    color: '#333',
+    paddingVertical: 2,
   },
 });

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { WELLNESS_TYPES } from '../constants/wellness';
 
 // Vancouver coordinates
 const VANCOUVER_REGION = {
@@ -11,19 +12,7 @@ const VANCOUVER_REGION = {
   longitudeDelta: 0.05,
 };
 
-const WELLNESS_TYPES = {
-  GYM: { icon: '💪', color: '#FF5252', label: 'Gym' },
-  PARK: { icon: '🌳', color: '#4CAF50', label: 'Park' },
-  YOGA: { icon: '🧘', color: '#9C27B0', label: 'Yoga Studio' },
-  POOL: { icon: '🏊', color: '#2196F3', label: 'Swimming Pool' },
-  HEALTH_FOOD: { icon: '🥗', color: '#8BC34A', label: 'Health Food Store' },
-  SPORTS: { icon: '⚽', color: '#FFC107', label: 'Sports Facility' },
-  HIKING: { icon: '🥾', color: '#795548', label: 'Hiking Trail' },
-  MEDITATION: { icon: '🧠', color: '#9575CD', label: 'Meditation Center' },
-  WELLNESS_CENTER: { icon: '⭐', color: '#00BCD4', label: 'Wellness Center' },
-};
-
-export default function LocationPicker({ onLocationSelected }) {
+const LocationPicker = ({ onLocationSelected }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [currentLocation, setCurrentLocation] = useState(VANCOUVER_REGION);
@@ -151,6 +140,24 @@ export default function LocationPicker({ onLocationSelected }) {
     }
   };
 
+  const handleMarkerPress = (locationId) => {
+    Alert.alert(
+      'Delete Location',
+      'Do you want to remove this location?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          onPress: () => removeLocation(locationId),
+          style: 'destructive'
+        }
+      ]
+    );
+  };
+
   return (
     <>
       <TouchableOpacity 
@@ -196,12 +203,12 @@ export default function LocationPicker({ onLocationSelected }) {
                     latitude: Number(location.latitude),
                     longitude: Number(location.longitude),
                   }}
-                  title={location.title}
-                  description={location.description}
+                  title={WELLNESS_TYPES[location.type].label}
+                  description="Tap to delete"
                   pinColor={WELLNESS_TYPES[location.type].color}
-                  onCalloutPress={() => removeLocation(location.id)}
+                  onPress={() => handleMarkerPress(location.id)}
                 />
-              ))}
+              ))}    
             </MapView>
           </View>
 
@@ -294,11 +301,16 @@ const styles = StyleSheet.create({
   },
   typeSelector: {
     position: 'absolute',
-    top: 20,
+    top: 60,
     left: 0,
     right: 0,
     paddingHorizontal: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   typeSelectorContent: {
     paddingVertical: 10,
@@ -315,9 +327,13 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
   },
   selectedType: {
-    transform: [{ scale: 1.1 }],
     borderWidth: 2,
     borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.84,
+    elevation: 4,
   },
   typeButtonText: {
     color: '#fff',
@@ -351,3 +367,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+export default LocationPicker;
