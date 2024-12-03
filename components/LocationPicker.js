@@ -457,6 +457,8 @@ const LocationPicker = ({ onLocationSelected }) => {
   };
 
   const handleMarkerPress = (locationId) => {
+    const location = selectedLocations.find(loc => loc.id === locationId);
+
     Alert.alert(
       'Location Options',
       'What would you like to do with this location?',
@@ -478,6 +480,39 @@ const LocationPicker = ({ onLocationSelected }) => {
       ]
     );
   };
+
+  const handleEditLocation = (location) => {
+    // Create action buttons for each wellness type
+    const buttons = Object.entries(WELLNESS_TYPES).map(([type, data]) => ({
+      text: `${data.icon} ${data.label}`,
+      onPress: () => {
+        setSelectedLocations(prev => prev.map(loc => {
+          if (loc.id === location.id) {
+            return {
+              ...loc,
+              type: type,
+              title: `${data.icon} ${loc.address}`,
+              description: data.label
+            };
+          }
+          return loc;
+        }));
+      }
+    }));
+  
+    // Add cancel button
+    buttons.push({
+      text: 'Cancel',
+      style: 'cancel'
+    });
+  
+    Alert.alert(
+      'Select New Type',
+      'Choose a new type for this location:',
+      buttons
+    );
+  };
+
 
   return (
     <>
