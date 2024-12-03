@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import QuickView from '../components/QuickView';
 import { getAuth, signOut } from 'firebase/auth';
+import { ProfileModal } from '../components/ProfileModal';
 
 export default function HomeScreen({ navigation }) {
+  const [profileVisible, setProfileVisible] = useState(false);
+
   const handleLogout = async () => {
     const auth = getAuth();
     try {
@@ -18,7 +21,16 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Your Quick Views</Text>
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>Your Quick Views</Text>
+        <TouchableOpacity 
+          style={styles.profileButton}
+          onPress={() => setProfileVisible(true)}
+        >
+          <Text style={styles.profileButtonText}>Profile</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.quickViewsGrid}>
         <View style={styles.row}>
           <QuickView 
@@ -45,9 +57,15 @@ export default function HomeScreen({ navigation }) {
           />
         </View>
       </View>
+
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
+
+      <ProfileModal 
+        visible={profileVisible}
+        onClose={() => setProfileVisible(false)}
+      />
     </View>
   );
 }
@@ -58,10 +76,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 20,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+  },
+  profileButton: {
+    backgroundColor: '#673ab7',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  profileButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
   },
   quickViewsGrid: {
     flex: 1,
