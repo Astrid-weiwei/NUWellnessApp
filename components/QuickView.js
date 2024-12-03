@@ -15,7 +15,8 @@ export default function QuickView({ label, icon, onPress }) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    margin: 10,
+    width: '50%',
+    paddingHorizontal: 10,
   },
   iconContainer: {
     width: 60,
@@ -23,15 +24,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
-    marginBottom: 5,
+    borderRadius: 12,
+    marginBottom: 8,
   },
   icon: {
-    width: 40,
-    height: 40,
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
   },
   label: {
     fontSize: 14,
     textAlign: 'center',
+    maxWidth: '100%',
+    flexWrap: 'wrap',
   },
 });
