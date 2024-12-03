@@ -12,11 +12,21 @@ const Stack = createStackNavigator();
 
 function ToolsStackNavigator() {
   return (
-    <Stack.Navigator initialRouteName="ToolsHome">
+    <Stack.Navigator 
+      initialRouteName="ToolsHome"
+      screenOptions={{
+        headerBackTitle: "Back",
+        headerTitle: "",
+        headerBackTitleVisible: true,
+        headerTruncatedBackTitle: "Back"
+      }}
+    >
       <Stack.Screen 
         name="ToolsHome" 
         component={ToolsScreen} 
-        options={{ title: 'Tools' }} 
+        options={{ 
+          headerShown: false
+        }} 
       />
       <Stack.Screen 
         name="Mood Tracker" 
@@ -33,17 +43,14 @@ function ToolsStackNavigator() {
       <Stack.Screen 
         name="Self-Assessment" 
         component={SelfAssessmentScreen}
-        options={{ title: 'Self Assessment' }} 
       />
       <Stack.Screen 
         name="PHQ9" 
         component={PHQ9Screen} 
-        options={{ title: 'Depression Assessment' }}
       />
       <Stack.Screen 
         name="GAD7" 
         component={GAD7Screen} 
-        options={{ title: 'Anxiety Assessment' }}
       />
     </Stack.Navigator>
   );
