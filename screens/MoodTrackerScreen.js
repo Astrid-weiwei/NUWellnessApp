@@ -31,7 +31,11 @@ export default function MoodTrackerScreen() {
   const fetchEntries = async () => {
     try {
       const fetchedEntries = await getMoodEntries();
-      setEntries(fetchedEntries);
+      // Sort entries by timestamp in descending order (newest first)
+      const sortedEntries = fetchedEntries.sort((a, b) => 
+        new Date(b.timestamp) - new Date(a.timestamp)
+      );
+      setEntries(sortedEntries);
     } catch (error) {
       console.error('Error fetching entries:', error);
       Alert.alert('Error', 'Failed to load entries');

@@ -58,7 +58,7 @@ export default function LoginScreen({ navigation }) {
           errorMessage = 'Invalid email or password.';
           break;
         case 'auth/weak-password':
-          errorMessage = 'Password should be at least 6 characters.';
+          errorMessage = 'Weak Password. Password should be at least 6 characters.';
           break;
       }
       Alert.alert('Error', errorMessage);
