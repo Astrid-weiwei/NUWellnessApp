@@ -1,18 +1,79 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Modal } from 'react-native';
 import * as Notifications from "expo-notifications";
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function MeditationScreen() {
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [reminderTime, setReminderTime] = useState(null);
+  const [selectedMeditation, setSelectedMeditation] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [timer, setTimer] = useState(0);
+  const [isActive, setIsActive] = useState(false);
 
   const meditationTypes = ['Box Breathing', 'Belly Breathing', 'Basic Body Scan', 'Five Senses Check-in'];
 
-  const startMeditation = (meditation) => {
-    console.log(`Starting ${meditation}`);
+  const meditationInstructions = {
+    'Box Breathing': [
+      'Find a comfortable position',
+      'Inhale for 4 counts',
+      'Hold for 4 counts',
+      'Exhale for 4 counts',
+      'Hold for 4 counts',
+      'Repeat the cycle'
+    ],
+    'Belly Breathing': [
+      'Lie down or sit comfortably',
+      'Place one hand on your belly',
+      'Inhale deeply through your nose',
+      'Feel your belly rise',
+      'Exhale slowly through your mouth',
+      'Feel your belly lower'
+    ],
+    'Basic Body Scan': [
+      'Lie down comfortably',
+      'Close your eyes',
+      'Focus on your toes',
+      'Slowly move attention upward',
+      'Notice sensations in each area',
+      'Release tension as you go'
+    ],
+    'Five Senses Check-in': [
+      'Notice 5 things you can see',
+      'Notice 4 things you can touch',
+      'Notice 3 things you can hear',
+      'Notice 2 things you can smell',
+      'Notice 1 thing you can taste'
+    ]
   };
 
+  // Timer Functions
+  const toggleTimer = () => {
+    setIsActive(!isActive);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  };
+
+  // Meditation Functions
+  const startMeditation = (meditation) => {
+    setSelectedMeditation(meditation);
+    setShowModal(true);
+    setTimer(0);
+    setIsActive(false);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedMeditation(null);
+    setTimer(0);
+    setIsActive(false);
+  };
+
+  // Reminder Functions
   const showTimePickerModal = () => {
     setShowTimePicker(true);
   };
@@ -89,6 +150,19 @@ export default function MeditationScreen() {
     }
   };
 
+  // Timer Effect
+  React.useEffect(() => {
+    let interval = null;
+    if (isActive) {
+      interval = setInterval(() => {
+        setTimer(timer => timer + 1);
+      }, 1000);
+    } else if (!isActive && timer !== 0) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timer]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Meditation</Text>
@@ -130,6 +204,7 @@ export default function MeditationScreen() {
         />
       )}
 
+      {/* Meditation Options */}
       {meditationTypes.map((meditation, index) => (
         <TouchableOpacity 
           key={index} 
@@ -139,6 +214,47 @@ export default function MeditationScreen() {
           <Text style={styles.meditationText}>{meditation}</Text>
         </TouchableOpacity>
       ))}
+
+      {/* Meditation Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showModal}
+        onRequestClose={closeModal}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalHeader}>{selectedMeditation}</Text>
+            
+            <View style={styles.timerSection}>
+              <Text style={styles.timerText}>{formatTime(timer)}</Text>
+              <TouchableOpacity 
+                style={[styles.timerButton, isActive && styles.activeTimer]} 
+                onPress={toggleTimer}
+              >
+                <Text style={styles.timerButtonText}>
+                  {isActive ? 'Pause' : 'Start'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.instructionsContainer}>
+              {selectedMeditation && meditationInstructions[selectedMeditation].map((instruction, index) => (
+                <Text key={index} style={styles.instruction}>
+                  • {instruction}
+                </Text>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={closeModal}
+            >
+              <Text style={styles.closeButtonText}>End Session</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -197,5 +313,67 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  instructionsContainer: {
+    marginVertical: 20,
+  },
+  instruction: {
+    fontSize: 16,
+    marginBottom: 10,
+    lineHeight: 24,
+  },
+  timerSection: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  timerText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  timerButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  activeTimer: {
+    backgroundColor: '#ff9500',
+  },
+  timerButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    backgroundColor: '#ff4444',
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
