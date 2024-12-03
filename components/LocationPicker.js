@@ -253,27 +253,24 @@ const fetchLocationName = async (latitude, longitude) => {
 };
 
 const getLocationName = async (latitude, longitude) => {
-  // First check predefined areas
-  const areaName = getLocationNameFromCache(latitude, longitude);
-  if (areaName) {
-    return areaName;
+  try {
+    const result = await Location.reverseGeocodeAsync({
+      latitude,
+      longitude
+    });
+
+    if (result[0]) {
+      const { name, street, district, city } = result[0];
+      return [street, district, city]  // You can adjust which fields to include
+        .filter(Boolean)
+        .slice(0, 2)
+        .join(', ') || 'Selected Location';
+    }
+    return 'Selected Location';
+  } catch (error) {
+    console.warn('Geocoding error:', error);
+    return 'Selected Location';
   }
-
-  // Then check cached locations
-  const cacheKey = getCacheKey(latitude, longitude);
-  const cachedName = locationCache.get(cacheKey);
-  if (cachedName) {
-    return cachedName;
-  }
-
-  // If not in cache, fetch from API
-  const locationName = await fetchLocationName(latitude, longitude);
-  
-  // Cache the result
-  locationCache.set(cacheKey, locationName);
-  saveCache();
-
-  return locationName;
 };
 
 const LocationPicker = ({ onLocationSelected }) => {

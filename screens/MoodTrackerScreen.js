@@ -43,22 +43,24 @@ export default function MoodTrackerScreen() {
       Alert.alert('Incomplete Entry', 'Please select a mood and write a journal entry before saving.');
       return;
     }
-
+  
     try {
       const newEntry = {
         mood: selectedMood,
         journal: journal.trim(),
-        imageUri,
+        imageUri: imageUri || null, // Ensure null if undefined
         locations: locations.map(loc => ({
-          ...loc,
-          type: loc.type,
-          placeName: loc.placeName,
-          latitude: Number(loc.latitude),
-          longitude: Number(loc.longitude),
-        })),
+          type: loc.type || 'WELLNESS_CENTER', // Provide default type
+          placeName: loc.placeName || '', // Ensure empty string if undefined
+          latitude: Number(loc.latitude) || 0, // Ensure 0 if undefined
+          longitude: Number(loc.longitude) || 0, // Ensure 0 if undefined
+        })) || [], // Ensure empty array if undefined
         timestamp: new Date().toISOString(),
       };
-
+  
+      // Log the entry for debugging
+      console.log('Saving entry:', newEntry);
+  
       await addMoodEntry(newEntry);
       
       // Reset form
@@ -70,7 +72,7 @@ export default function MoodTrackerScreen() {
       fetchEntries();
     } catch (error) {
       console.error('Error saving entry:', error);
-      Alert.alert('Error', 'Failed to save entry');
+      Alert.alert('Error', 'Failed to save entry: ' + error.message);
     }
   };
 
