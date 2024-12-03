@@ -3,12 +3,17 @@ import { View, Text, StyleSheet } from 'react-native';
 import { WELLNESS_TYPES } from '../constants/wellness';
 
 const LocationDisplay = ({ location }) => {
+  console.log('LocationDisplay received location:', location); // Debug log
+  
+  if (!location) return null;
+  
   const type = location.type || 'WELLNESS_CENTER';
+  const wellnessType = WELLNESS_TYPES[type] || WELLNESS_TYPES['WELLNESS_CENTER'];
   
   return (
     <View style={styles.container}>
       <Text style={styles.typeText}>
-        {WELLNESS_TYPES[type].icon} {WELLNESS_TYPES[type].label}
+        {wellnessType.icon} {wellnessType.label}
       </Text>
       {location.placeName && (
         <Text style={styles.placeText}>

@@ -4,13 +4,24 @@ import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { WELLNESS_TYPES } from '../constants/wellness';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  VANCOUVER_LATITUDE,
+  VANCOUVER_LONGITUDE,
+  MAP_DELTA,
+  NOMINATIM_BASE_URL,
+  USER_AGENT,
+  LOCATION_TIME_INTERVAL,
+  LOCATION_DISTANCE_INTERVAL,
+  LOCATION_CACHE_KEY,
+  RECENT_LOCATIONS_KEY
+} from "@env";
 
 // Vancouver coordinates
 const VANCOUVER_REGION = {
-  latitude: 49.2827,
-  longitude: -123.1207,
-  latitudeDelta: 0.05,
-  longitudeDelta: 0.05,
+  latitude: Number(VANCOUVER_LATITUDE),
+  longitude: Number(VANCOUVER_LONGITUDE),
+  latitudeDelta: Number(MAP_DELTA),
+  longitudeDelta: Number(MAP_DELTA),
 };
 
 // Cache common Vancouver areas
@@ -190,7 +201,7 @@ const getLocationNameFromCache = (latitude, longitude) => {
   return null;
 };
 
-const CACHE_KEY = 'locationNameCache';
+const CACHE_KEY = LOCATION_CACHE_KEY;
 let locationCache = new Map();
 
 const loadCache = async () => {
@@ -221,10 +232,10 @@ const getCacheKey = (lat, lng) => {
 const fetchLocationName = async (latitude, longitude) => {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+      `${NOMINATIM_BASE_URL}/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
       {
         headers: {
-          'User-Agent': 'MoodTrackerApp/1.0',
+          'User-Agent': USER_AGENT,
           'Accept-Language': 'en'
         }
       }
@@ -546,8 +557,16 @@ const LocationPicker = ({ onLocationSelected }) => {
 
   const handleConfirmLocations = async () => {
     try {
-      const savedLocations = await saveLocationsWithRetry(selectedLocations);
-      onLocationSelected(savedLocations);
+      // Make sure we properly format the locations before saving
+      const formattedLocations = selectedLocations.map(location => ({
+        type: location.type,
+        placeName: location.placeName,
+        latitude: Number(location.latitude),
+        longitude: Number(location.longitude),
+      }));
+  
+      const savedLocations = await saveLocationsWithRetry(formattedLocations);
+      onLocationSelected(formattedLocations); // Pass the formatted locations to parent
       setModalVisible(false);
     } catch (error) {
       Alert.alert(
@@ -570,19 +589,55 @@ const LocationPicker = ({ onLocationSelected }) => {
 
   const handleMarkerPress = (locationId) => {
     const location = selectedLocations.find(loc => loc.id === locationId);
-
+    if (!location) return;
+  
     Alert.alert(
-      'Location Options',
+      `${WELLNESS_TYPES[location.type].icon} ${location.placeName || 'Location'}`,
       'What would you like to do with this location?',
       [
         { 
-          text: 'Edit Type',
+          text: 'Change Type',
           onPress: () => handleEditLocation(location),
+          style: 'default'
+        },
+        {
+          text: 'Rename',
+          onPress: async () => {
+            // First try to get a new location name
+            const newName = await getLocationWithFallback(location.latitude, location.longitude);
+            
+            setSelectedLocations(prev => prev.map(loc => {
+              if (loc.id === locationId) {
+                return {
+                  ...loc,
+                  placeName: newName,
+                  title: `${WELLNESS_TYPES[loc.type].icon} ${newName}`
+                };
+              }
+              return loc;
+            }));
+          },
           style: 'default'
         },
         { 
           text: 'Delete',
-          onPress: () => removeLocation(locationId),
+          onPress: () => {
+            Alert.alert(
+              'Delete Location',
+              'Are you sure you want to delete this location?',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel'
+                },
+                {
+                  text: 'Delete',
+                  onPress: () => removeLocation(locationId),
+                  style: 'destructive'
+                }
+              ]
+            );
+          },
           style: 'destructive'
         },
         { 
@@ -592,7 +647,7 @@ const LocationPicker = ({ onLocationSelected }) => {
       ]
     );
   };
-
+  
   const handleEditLocation = (location) => {
     // Create action buttons for each wellness type
     const buttons = Object.entries(WELLNESS_TYPES).map(([type, data]) => ({

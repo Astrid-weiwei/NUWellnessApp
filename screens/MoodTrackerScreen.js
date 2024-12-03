@@ -45,6 +45,8 @@ export default function MoodTrackerScreen() {
     }
   
     try {
+      console.log('Current locations before save:', locations); // Debug log
+
       const newEntry = {
         mood: selectedMood,
         journal: journal.trim(),
@@ -102,6 +104,9 @@ export default function MoodTrackerScreen() {
 
   const renderEntry = ({ item }) => {
     if (!item) return null;
+
+    console.log('Rendering entry with locations:', item.locations); // Debug log
+
     return (
       <View style={styles.entryContainer}>
         <View style={styles.entryHeader}>
@@ -115,14 +120,15 @@ export default function MoodTrackerScreen() {
 
         <Text style={styles.journalText}>{item.journal}</Text>
 
-        {item.locations && item.locations.length > 0 && (
-          <View style={styles.locationWrapper}>
-            <Text style={styles.locationHeader}>Wellness Locations:</Text>
-            {item.locations.map((loc, index) => (
-              <LocationDisplay key={index} location={loc} />
-            ))}
-          </View>
-        )}
+        {Array.isArray(item.locations) && item.locations.length > 0 && (
+        <View style={styles.locationWrapper}>
+          <Text style={styles.locationHeader}>Wellness Locations:</Text>
+          {item.locations.map((loc, index) => {
+            console.log('Location being passed to LocationDisplay:', loc); // Debug log
+            return <LocationDisplay key={index} location={loc} />;
+          })}
+        </View>
+      )}
 
         {item.imageUri && (
           <Image
@@ -226,7 +232,7 @@ export default function MoodTrackerScreen() {
       <View style={styles.reminderSection}>
         {reminderTime ? (
           <View style={styles.activeReminder}>
-            <Text style={styles.reminderText}>
+            <Text style={styles .reminderText}>
               Reminder set for {reminderTime.toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit'
