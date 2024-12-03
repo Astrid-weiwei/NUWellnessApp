@@ -6,13 +6,13 @@ import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC_zFSSHvXzoj9G9VEa6jArvKTScbzGUV4",
-  authDomain: "nuwellnessapp.firebaseapp.com",
-  projectId: "nuwellnessapp",
-  storageBucket: "nuwellnessapp.firebasestorage.app",
-  messagingSenderId: "321520657474",
-  appId: "1:321520657474:web:466570a023d3d4459f79db",
-  measurementId: "G-7GEWMPFYK4",
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
