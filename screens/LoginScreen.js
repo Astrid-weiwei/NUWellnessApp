@@ -10,7 +10,7 @@ import {
   SafeAreaView,
   Image 
 } from 'react-native';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -62,6 +62,28 @@ export default function LoginScreen({ navigation }) {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email address to reset the password.');
+      return;
+    }
+  
+    try {
+      const auth = getAuth(); // Ensure Firebase Auth is initialized
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert('Success', 'Password reset email sent! Please check your inbox.');
+    } catch (error) {
+      let errorMessage = 'An error occurred.';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No user found with this email address.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      }
+      console.error('Password reset error:', error);
+      Alert.alert('Error', errorMessage);
+    }
+  };
+  
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -142,6 +164,13 @@ export default function LoginScreen({ navigation }) {
                 ? "New to NUWellness? Create Account" 
                 : "Already have an account? Login"}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.switchButton}
+            onPress={handleForgotPassword}
+          >
+            <Text style={styles.switchButtonText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
 
