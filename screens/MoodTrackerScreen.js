@@ -5,7 +5,7 @@ import LocationPicker from '../components/LocationPicker';
 import { addMoodEntry, getMoodEntries, deleteMoodEntry } from '../firebaseService';
 import * as Notifications from "expo-notifications";
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { WELLNESS_TYPES } from '../constants/wellness';
+import LocationDisplay from '../components/LocationDisplay';
 
 export default function MoodTrackerScreen() {
   const [journal, setJournal] = useState('');
@@ -51,6 +51,8 @@ export default function MoodTrackerScreen() {
         imageUri,
         locations: locations.map(loc => ({
           ...loc,
+          type: loc.type,
+          placeName: loc.placeName,
           latitude: Number(loc.latitude),
           longitude: Number(loc.longitude),
         })),
@@ -116,16 +118,9 @@ export default function MoodTrackerScreen() {
         {item.locations && item.locations.length > 0 && (
           <View style={styles.locationWrapper}>
             <Text style={styles.locationHeader}>Wellness Locations:</Text>
-            {item.locations.map((loc, index) => {
-              const type = loc.type || 'WELLNESS_CENTER';
-              return (
-                <View key={index} style={styles.locationItemContainer}>
-                  <Text style={styles.locationItem}>
-                    {WELLNESS_TYPES[type].icon} {WELLNESS_TYPES[type].label}
-                  </Text>
-                </View>
-              );
-            })}
+            {item.locations.map((loc, index) => (
+              <LocationDisplay key={index} location={loc} />
+            ))}
           </View>
         )}
 
