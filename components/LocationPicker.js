@@ -400,24 +400,36 @@ const LocationPicker = ({ onLocationSelected }) => {
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         throw new Error('Invalid coordinates');
       }
-
+  
+      // Get location name using Expo Location
+      const result = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude
+      });
+  
+      let locationName = 'Selected Location';
+      if (result[0]) {
+        const { street, district, city } = result[0];
+        locationName = [street, district || city]
+          .filter(Boolean)
+          .join(', ');
+      }
+  
       const location = {
         id: Date.now().toString(),
         latitude: Number(latitude.toFixed(6)),
         longitude: Number(longitude.toFixed(6)),
         type: selectedLocationType,
         timestamp: new Date().toISOString(),
+        placeName: locationName,  // Save the location name
       };
-
-      const locationName = await getLocationName(latitude, longitude);
-      
+  
       const newLocation = {
         ...location,
         title: `${WELLNESS_TYPES[selectedLocationType].icon} ${locationName}`,
         description: WELLNESS_TYPES[selectedLocationType].label,
-        address: locationName,
       };
-
+  
       setSelectedLocations(prev => [...prev, newLocation]);
     } catch (error) {
       console.warn('Error adding location:', error);
