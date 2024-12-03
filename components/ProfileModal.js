@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Modal, 
   View, 
@@ -6,13 +6,91 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   Image,
-  ScrollView
+  ScrollView,
+  TextInput,
+  Alert,
+  Platform
 } from 'react-native';
-import { getAuth } from 'firebase/auth';
+import { getAuth, updateProfile } from 'firebase/auth';
+import * as ImagePicker from 'expo-image-picker';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export const ProfileModal = ({ visible, onClose }) => {
   const auth = getAuth();
   const user = auth.currentUser;
+  const storage = getStorage();
+
+  const [displayName, setDisplayName] = useState(user?.displayName || 'User');
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const pickImage = async () => {
+    try {
+      // Request permission
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Sorry, we need camera roll permissions to upload an image.');
+          return;
+        }
+      }
+
+      // Pick the image
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+      });
+
+      if (!result.canceled && result.assets[0].uri) {
+        setLoading(true);
+        try {
+          // Convert image to blob
+          const response = await fetch(result.assets[0].uri);
+          const blob = await response.blob();
+
+          // Upload to Firebase Storage
+          const fileRef = ref(storage, `avatars/${user.uid}`);
+          await uploadBytes(fileRef, blob);
+
+          // Get download URL
+          const downloadURL = await getDownloadURL(fileRef);
+
+          // Update user profile
+          await updateProfile(user, {
+            photoURL: downloadURL
+          });
+
+          Alert.alert('Success', 'Profile photo updated successfully!');
+        } catch (error) {
+          Alert.alert('Error', 'Failed to update profile photo.');
+          console.error(error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while picking the image.');
+      console.error(error);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setLoading(true);
+    try {
+      await updateProfile(user, {
+        displayName: displayName
+      });
+      setIsEditing(false);
+      Alert.alert('Success', 'Profile updated successfully!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update profile.');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Modal
@@ -29,7 +107,11 @@ export const ProfileModal = ({ visible, onClose }) => {
           
           <ScrollView>
             <View style={styles.profileHeader}>
-              <View style={styles.avatarContainer}>
+              <TouchableOpacity 
+                style={styles.avatarContainer}
+                onPress={pickImage}
+                disabled={loading}
+              >
                 {user?.photoURL ? (
                   <Image 
                     source={{ uri: user.photoURL }} 
@@ -42,21 +124,53 @@ export const ProfileModal = ({ visible, onClose }) => {
                     </Text>
                   </View>
                 )}
-              </View>
-              <Text style={styles.userName}>
-                {user?.displayName || 'User'}
-              </Text>
+                <View style={styles.editOverlay}>
+                  <Text style={styles.editText}>Edit</Text>
+                </View>
+              </TouchableOpacity>
+
+              {isEditing ? (
+                <View style={styles.editNameContainer}>
+                  <TextInput
+                    style={styles.nameInput}
+                    value={displayName}
+                    onChangeText={setDisplayName}
+                    placeholder="Enter name"
+                    autoFocus
+                  />
+                  <View style={styles.editButtons}>
+                    <TouchableOpacity 
+                      style={[styles.editButton, styles.cancelButton]}
+                      onPress={() => {
+                        setDisplayName(user?.displayName || 'User');
+                        setIsEditing(false);
+                      }}
+                    >
+                      <Text style={styles.editButtonText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.editButton, styles.saveButton]}
+                      onPress={handleSaveProfile}
+                      disabled={loading}
+                    >
+                      <Text style={styles.editButtonText}>Save</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={() => setIsEditing(true)}>
+                  <Text style={styles.userName}>
+                    {displayName}
+                    <Text style={styles.editIcon}> ✎</Text>
+                  </Text>
+                </TouchableOpacity>
+              )}
+              
               <Text style={styles.userEmail}>{user?.email}</Text>
             </View>
 
             <View style={styles.infoSection}>
               <Text style={styles.sectionTitle}>Account Information</Text>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Email Verified:</Text>
-                <Text style={styles.infoValue}>
-                  {user?.emailVerified ? 'Yes' : 'No'}
-                </Text>
-              </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Member Since:</Text>
                 <Text style={styles.infoValue}>
@@ -74,6 +188,62 @@ export const ProfileModal = ({ visible, onClose }) => {
 };
 
 const styles = StyleSheet.create({
+  // ... (keep existing styles) ...
+  editNameContainer: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  nameInput: {
+    fontSize: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#673ab7',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    minWidth: 150,
+    textAlign: 'center',
+  },
+  editButtons: {
+    flexDirection: 'row',
+    marginTop: 10,
+    gap: 10,
+  },
+  editButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 15,
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+  },
+  saveButton: {
+    backgroundColor: '#673ab7',
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  editIcon: {
+    fontSize: 16,
+    color: '#673ab7',
+    marginLeft: 5,
+  },
+  editOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingVertical: 4,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
+  },
+  editText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '500',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
