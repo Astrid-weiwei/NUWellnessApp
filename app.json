@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "plugins": [
       [
         "expo-image-picker",
@@ -17,31 +16,18 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+          "locationAlwaysAndWhenInUsePermission": "Allow this app to access your location."
         }
       ]
     ],
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
-      "supportsTablet": true,
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app needs access to location to record your mood entries.",
-        "NSLocationAlwaysUsageDescription": "This app needs access to location to record your mood entries."
+        "NSCameraUsageDescription": "We need camera access to take photos for mood entries.",
+        "NSLocationWhenInUseUsageDescription": "We need location access for mood entry locations."
       }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "permissions": ["ACCESS_FINE_LOCATION", "CAMERA"]
     }
   }
 }

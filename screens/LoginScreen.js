@@ -8,7 +8,12 @@ import {
   StyleSheet, 
   ActivityIndicator,
   SafeAreaView,
-  Image 
+  Image,
+  TouchableWithoutFeedback,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView
 } from 'react-native';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 
@@ -53,7 +58,7 @@ export default function LoginScreen({ navigation }) {
           errorMessage = 'Invalid email or password.';
           break;
         case 'auth/weak-password':
-          errorMessage = 'Password should be at least 6 characters.';
+          errorMessage = 'Weak Password. Password should be at least 6 characters.';
           break;
       }
       Alert.alert('Error', errorMessage);
@@ -86,101 +91,109 @@ export default function LoginScreen({ navigation }) {
   
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Enhanced Branding Section */}
-        <View style={styles.brandingContainer}>
-          {/* App Logo */}
-          <View style={styles.logoContainer}>
-            <Image
-              source={require('../assets/app-logo.jpg')} // You'll need to add your logo file
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-
-          {/* App Name and Tagline */}
-          <Text style={styles.appName}>NUWellness</Text>
-          <Text style={styles.tagline}>Organize Your Life</Text>
-
-          {/* Value Proposition */}
-          <View style={styles.valueProps}>
-            <Text style={styles.valueProp}>
-              <Text style={styles.highlight}>✓</Text> Balance Work & Life
-            </Text>
-            <Text style={styles.valueProp}>
-              <Text style={styles.highlight}>✓</Text> Boost Productivity
-            </Text>
-            <Text style={styles.valueProp}>
-              <Text style={styles.highlight}>✓</Text> Find Inner Peace
-            </Text>
-          </View>
-        </View>
-
-        {/* Auth Form */}
-        <View style={styles.formContainer}>
-          <Text style={styles.formHeader}>
-            {isLogin ? 'Welcome Back!' : 'Join NUWellness'}
-          </Text>
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-          />
-          
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            autoCapitalize="none"
-          />
-
-          <TouchableOpacity 
-            style={styles.authButton}
-            onPress={handleAuth}
-            disabled={loading}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollContainer}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.authButtonText}>
-                {isLogin ? 'Login' : 'Create Account'}
+            {/* Branding Section */}
+            <View style={styles.brandingContainer}>
+              <View style={styles.logoContainer}>
+                <Image
+                  source={require('../assets/app-logo.jpg')}
+                  style={styles.logo}
+                  resizeMode="contain"
+                />
+              </View>
+
+              <Text style={styles.appName}>NUWellness</Text>
+              <Text style={styles.tagline}>Organize Your Life</Text>
+
+              <View style={styles.valueProps}>
+                <Text style={styles.valueProp}>
+                  <Text style={styles.highlight}>✓</Text> Balance Work & Life
+                </Text>
+                <Text style={styles.valueProp}>
+                  <Text style={styles.highlight}>✓</Text> Boost Productivity
+                </Text>
+                <Text style={styles.valueProp}>
+                  <Text style={styles.highlight}>✓</Text> Find Inner Peace
+                </Text>
+              </View>
+            </View>
+
+            {/* Auth Form */}
+            <View style={styles.formContainer}>
+              <Text style={styles.formHeader}>
+                {isLogin ? 'Welcome Back!' : 'Join NUWellness'}
               </Text>
-            )}
-          </TouchableOpacity>
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+              />
+              
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                autoCapitalize="none"
+              />
 
-          <TouchableOpacity 
-            style={styles.switchButton}
-            onPress={() => setIsLogin(!isLogin)}
-          >
-            <Text style={styles.switchButtonText}>
-              {isLogin 
-                ? "New to NUWellness? Create Account" 
-                : "Already have an account? Login"}
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.authButton}
+                onPress={handleAuth}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.authButtonText}>
+                    {isLogin ? 'Login' : 'Create Account'}
+                  </Text>
+                )}
+              </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={styles.switchButton}
-            onPress={handleForgotPassword}
-          >
-            <Text style={styles.switchButtonText}>Forgot Password?</Text>
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity 
+                style={styles.switchButton}
+                onPress={() => setIsLogin(!isLogin)}
+              >
+                <Text style={styles.switchButtonText}>
+                  {isLogin 
+                    ? "New to NUWellness? Create Account" 
+                    : "Already have an account? Login"}
+                </Text>
+              </TouchableOpacity>
 
-        {/* Brand Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Embrace Better Living
-          </Text>
-        </View>
-      </View>
+              <TouchableOpacity 
+                style={styles.switchButton}
+                onPress={handleForgotPassword}
+              >
+                <Text style={styles.switchButtonText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Brand Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                Embrace Better Living
+              </Text>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -192,6 +205,9 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
     padding: 20,
     justifyContent: 'space-between',
   },

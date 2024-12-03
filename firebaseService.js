@@ -86,13 +86,16 @@ export const getMoodEntries = async () => {
 };
 
 // Update an existing mood entry
-export const updateMoodEntry = async (id, updatedEntry) => {
+export const updateMoodEntry = async (entry) => {
   try {
-    const moodDocRef = doc(db, 'moodEntries', id);
-    await updateDoc(moodDocRef, updatedEntry);
-    console.log("Mood entry updated successfully!");
+    const entryRef = doc(db, 'moodEntries', entry.id);
+    await updateDoc(entryRef, {
+      mood: entry.mood,
+      journal: entry.journal,
+      // Add other fields as needed
+    });
   } catch (error) {
-    console.error("Error updating mood entry: ", error);
+    throw error;
   }
 };
 

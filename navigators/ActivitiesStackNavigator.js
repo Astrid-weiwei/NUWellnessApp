@@ -8,10 +8,30 @@ const Stack = createStackNavigator();
 
 export default function ActivitiesStackNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Activities">
-      <Stack.Screen name="Activities" component={ActivitiesScreen} />
-      <Stack.Screen name="Work" component={WorkScreen} />
-      <Stack.Screen name="Life" component={LifeScreen} />
+    <Stack.Navigator 
+      initialRouteName="Activities"
+      screenOptions={{
+        headerBackTitle: "Back",
+        headerTitle: "",
+        headerBackTitleVisible: true,
+        headerTruncatedBackTitle: "Back"
+      }}
+    >
+      <Stack.Screen 
+        name="Activities" 
+        component={ActivitiesScreen}
+        options={{ 
+          headerShown: false
+        }}
+      />
+      <Stack.Screen 
+        name="Work" 
+        component={WorkScreen} 
+      />
+      <Stack.Screen 
+        name="Life" 
+        component={LifeScreen} 
+      />
     </Stack.Navigator>
   );
 }

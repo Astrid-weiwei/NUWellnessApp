@@ -4,13 +4,24 @@ import MapView, { Marker, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { WELLNESS_TYPES } from '../constants/wellness';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  VANCOUVER_LATITUDE,
+  VANCOUVER_LONGITUDE,
+  MAP_DELTA,
+  NOMINATIM_BASE_URL,
+  USER_AGENT,
+  LOCATION_TIME_INTERVAL,
+  LOCATION_DISTANCE_INTERVAL,
+  LOCATION_CACHE_KEY,
+  RECENT_LOCATIONS_KEY
+} from "@env";
 
 // Vancouver coordinates
 const VANCOUVER_REGION = {
-  latitude: 49.2827,
-  longitude: -123.1207,
-  latitudeDelta: 0.05,
-  longitudeDelta: 0.05,
+  latitude: Number(VANCOUVER_LATITUDE),
+  longitude: Number(VANCOUVER_LONGITUDE),
+  latitudeDelta: Number(MAP_DELTA),
+  longitudeDelta: Number(MAP_DELTA),
 };
 
 // Cache common Vancouver areas
@@ -190,7 +201,7 @@ const getLocationNameFromCache = (latitude, longitude) => {
   return null;
 };
 
-const CACHE_KEY = 'locationNameCache';
+const CACHE_KEY = LOCATION_CACHE_KEY;
 let locationCache = new Map();
 
 const loadCache = async () => {
@@ -221,10 +232,10 @@ const getCacheKey = (lat, lng) => {
 const fetchLocationName = async (latitude, longitude) => {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
+      `${NOMINATIM_BASE_URL}/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`,
       {
         headers: {
-          'User-Agent': 'MoodTrackerApp/1.0',
+          'User-Agent': USER_AGENT,
           'Accept-Language': 'en'
         }
       }
@@ -253,27 +264,70 @@ const fetchLocationName = async (latitude, longitude) => {
 };
 
 const getLocationName = async (latitude, longitude) => {
-  // First check predefined areas
-  const areaName = getLocationNameFromCache(latitude, longitude);
-  if (areaName) {
-    return areaName;
-  }
+  try {
+    const result = await Location.reverseGeocodeAsync({
+      latitude,
+      longitude
+    });
 
-  // Then check cached locations
-  const cacheKey = getCacheKey(latitude, longitude);
-  const cachedName = locationCache.get(cacheKey);
+    if (result[0]) {
+      const { name, street, district, city } = result[0];
+      return [street, district, city]  // You can adjust which fields to include
+        .filter(Boolean)
+        .slice(0, 2)
+        .join(', ') || 'Selected Location';
+    }
+    return 'Selected Location';
+  } catch (error) {
+    console.warn('Geocoding error:', error);
+    return 'Selected Location';
+  }
+};
+
+// New utility functions for fallback mechanisms
+const getLocationWithFallback = async (latitude, longitude) => {
+  // Try cached name first
+  const cachedName = getLocationNameFromCache(latitude, longitude);
   if (cachedName) {
     return cachedName;
   }
 
-  // If not in cache, fetch from API
-  const locationName = await fetchLocationName(latitude, longitude);
-  
-  // Cache the result
-  locationCache.set(cacheKey, locationName);
-  saveCache();
+  try {
+    // First attempt: Expo Location service
+    const expoResult = await getLocationName(latitude, longitude);
+    if (expoResult && expoResult !== 'Selected Location') {
+      return expoResult;
+    }
 
-  return locationName;
+    // Second attempt: OpenStreetMap
+    const osmResult = await fetchLocationName(latitude, longitude);
+    if (osmResult && osmResult !== 'Selected Location') {
+      return osmResult;
+    }
+
+    // Third attempt: Check predefined areas
+    const areaName = getLocationNameFromCache(latitude, longitude);
+    if (areaName) {
+      return areaName;
+    }
+
+    // Final fallback
+    return 'Selected Location';
+  } catch (error) {
+    console.warn('Error in location name resolution:', error);
+    return 'Selected Location';
+  }
+};
+
+const retryOperation = async (operation, maxAttempts = 3, delay = 1000) => {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt === maxAttempts) throw error;
+      await new Promise(resolve => setTimeout(resolve, delay * attempt));
+    }
+  }
 };
 
 const LocationPicker = ({ onLocationSelected }) => {
@@ -327,9 +381,18 @@ const LocationPicker = ({ onLocationSelected }) => {
 
   const startLocationUpdates = async () => {
     try {
-      // First get initial location
-      const initialLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+      // First try high accuracy
+      const initialLocation = await retryOperation(async () => {
+        try {
+          return await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High
+          });
+        } catch {
+          // Fallback to balanced accuracy
+          return await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced
+          });
+        }
       });
       
       updateCurrentLocation(initialLocation.coords);
@@ -347,12 +410,25 @@ const LocationPicker = ({ onLocationSelected }) => {
       );
     } catch (error) {
       console.warn('Error starting location updates:', error);
-      Alert.alert(
-        'Location Error',
-        'Unable to track location. Using last known or default location.',
-        [{ text: 'OK' }]
-      );
+      handleLocationError();
     }
+  };
+
+  const handleLocationError = () => {
+    Alert.alert(
+      'Location Service Error',
+      'Unable to get your location. Using default Vancouver location. Would you like to retry?',
+      [
+        {
+          text: 'Use Default',
+          onPress: () => updateCurrentLocation(VANCOUVER_REGION)
+        },
+        {
+          text: 'Retry',
+          onPress: () => retryOperation(startLocationUpdates)
+        }
+      ]
+    );
   };
 
   const updateCurrentLocation = (coords) => {
@@ -404,46 +480,204 @@ const LocationPicker = ({ onLocationSelected }) => {
         throw new Error('Invalid coordinates');
       }
 
+      setLoading(true);
+      
+      // Get location name with fallback mechanism
+      const locationName = await getLocationWithFallback(latitude, longitude);
+
       const location = {
         id: Date.now().toString(),
         latitude: Number(latitude.toFixed(6)),
         longitude: Number(longitude.toFixed(6)),
         type: selectedLocationType,
         timestamp: new Date().toISOString(),
+        placeName: locationName,
       };
 
-      const locationName = await getLocationName(latitude, longitude);
-      
       const newLocation = {
         ...location,
         title: `${WELLNESS_TYPES[selectedLocationType].icon} ${locationName}`,
         description: WELLNESS_TYPES[selectedLocationType].label,
-        address: locationName,
       };
 
       setSelectedLocations(prev => [...prev, newLocation]);
     } catch (error) {
       console.warn('Error adding location:', error);
-      Alert.alert('Error', 'Unable to add location. Please try again.');
+      Alert.alert(
+        'Error Adding Location',
+        'Unable to add location. Would you like to retry?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Retry',
+            onPress: () => handleMapPress(e)
+          }
+        ]
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleConfirmLocations = () => {
+  const saveLocationsWithRetry = async (locations) => {
     try {
-      const validLocations = selectedLocations.map(location => ({
-        ...location,
+      await retryOperation(async () => {
+        // Validate all locations before saving
+        const validLocations = locations.map(location => {
+          if (!Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
+            throw new Error(`Invalid coordinates for location: ${location.id}`);
+          }
+          return {
+            ...location,
+            latitude: Number(location.latitude),
+            longitude: Number(location.longitude),
+            latitudeStr: location.latitude.toFixed(6),
+            longitudeStr: location.longitude.toFixed(6),
+          };
+        });
+
+        // Try to save to AsyncStorage first
+        try {
+          const locationJson = JSON.stringify(validLocations);
+          await AsyncStorage.setItem('recent_locations', locationJson);
+        } catch (error) {
+          console.warn('Failed to cache locations:', error);
+        }
+
+        return validLocations;
+      });
+    } catch (error) {
+      console.error('Failed to save locations:', error);
+      throw error;
+    }
+  };
+
+  const handleConfirmLocations = async () => {
+    try {
+      // Make sure we properly format the locations before saving
+      const formattedLocations = selectedLocations.map(location => ({
+        type: location.type,
+        placeName: location.placeName,
         latitude: Number(location.latitude),
         longitude: Number(location.longitude),
-        latitudeStr: location.latitude.toFixed(6),
-        longitudeStr: location.longitude.toFixed(6),
       }));
-
-      onLocationSelected(validLocations);
+  
+      const savedLocations = await saveLocationsWithRetry(formattedLocations);
+      onLocationSelected(formattedLocations); // Pass the formatted locations to parent
       setModalVisible(false);
     } catch (error) {
-      console.warn('Error saving locations:', error);
-      Alert.alert('Error', 'Unable to save locations. Please try again.');
+      Alert.alert(
+        'Error Saving Locations',
+        'Unable to save locations. Would you like to retry?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => setModalVisible(false)
+          },
+          {
+            text: 'Retry',
+            onPress: handleConfirmLocations
+          }
+        ]
+      );
     }
+  };
+
+  const handleMarkerPress = (locationId) => {
+    const location = selectedLocations.find(loc => loc.id === locationId);
+    if (!location) return;
+  
+    Alert.alert(
+      `${WELLNESS_TYPES[location.type].icon} ${location.placeName || 'Location'}`,
+      'What would you like to do with this location?',
+      [
+        { 
+          text: 'Change Type',
+          onPress: () => handleEditLocation(location),
+          style: 'default'
+        },
+        {
+          text: 'Rename',
+          onPress: async () => {
+            // First try to get a new location name
+            const newName = await getLocationWithFallback(location.latitude, location.longitude);
+            
+            setSelectedLocations(prev => prev.map(loc => {
+              if (loc.id === locationId) {
+                return {
+                  ...loc,
+                  placeName: newName,
+                  title: `${WELLNESS_TYPES[loc.type].icon} ${newName}`
+                };
+              }
+              return loc;
+            }));
+          },
+          style: 'default'
+        },
+        { 
+          text: 'Delete',
+          onPress: () => {
+            Alert.alert(
+              'Delete Location',
+              'Are you sure you want to delete this location?',
+              [
+                {
+                  text: 'Cancel',
+                  style: 'cancel'
+                },
+                {
+                  text: 'Delete',
+                  onPress: () => removeLocation(locationId),
+                  style: 'destructive'
+                }
+              ]
+            );
+          },
+          style: 'destructive'
+        },
+        { 
+          text: 'Cancel',
+          style: 'cancel'
+        }
+      ]
+    );
+  };
+  
+  const handleEditLocation = (location) => {
+    // Create action buttons for each wellness type
+    const buttons = Object.entries(WELLNESS_TYPES).map(([type, data]) => ({
+      text: `${data.icon} ${data.label}`,
+      onPress: () => {
+        setSelectedLocations(prev => prev.map(loc => {
+          if (loc.id === location.id) {
+            return {
+              ...loc,
+              type: type,
+              title: `${data.icon} ${loc.address}`,
+              description: data.label
+            };
+          }
+          return loc;
+        }));
+      }
+    }));
+  
+    // Add cancel button
+    buttons.push({
+      text: 'Cancel',
+      style: 'cancel'
+    });
+  
+    Alert.alert(
+      'Select New Type',
+      'Choose a new type for this location:',
+      buttons
+    );
   };
 
   const removeLocation = (locationId) => {
@@ -452,29 +686,31 @@ const LocationPicker = ({ onLocationSelected }) => {
 
   const resetToVancouver = () => {
     if (mapRef.current && mapReady) {
-      mapRef.current.animateToRegion(VANCOUVER_REGION, 1000);
+      const vancouverRegion = {
+        latitude: 49.2827,
+        longitude: -123.1207,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      };
+      mapRef.current.animateToRegion(vancouverRegion, 1000);
+      setCurrentLocation(vancouverRegion);
     }
   };
 
-  const handleMarkerPress = (locationId) => {
-    Alert.alert(
-      'Delete Location',
-      'Do you want to remove this location?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete',
-          onPress: () => removeLocation(locationId),
-          style: 'destructive'
-        }
-      ]
-    );
+  const handleOpenModal = () => {
+    // Reset selected locations when opening the modal
+    setSelectedLocations([]);
+    setModalVisible(true);
+    if (hasLocationPermission) {
+      getCurrentLocation();
+    }
   };
 
   return (
     <>
       <TouchableOpacity 
         onPress={() => {
+          setSelectedLocations([]); // Reset locations when opening modal
           setModalVisible(true);
           if (hasLocationPermission) {
             getCurrentLocation();
