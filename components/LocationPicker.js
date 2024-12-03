@@ -513,11 +513,20 @@ const LocationPicker = ({ onLocationSelected }) => {
     );
   };
 
+  const handleOpenModal = () => {
+    // Reset selected locations when opening the modal
+    setSelectedLocations([]);
+    setModalVisible(true);
+    if (hasLocationPermission) {
+      getCurrentLocation();
+    }
+  };
 
   return (
     <>
       <TouchableOpacity 
         onPress={() => {
+          setSelectedLocations([]); // Reset locations when opening modal
           setModalVisible(true);
           if (hasLocationPermission) {
             getCurrentLocation();
