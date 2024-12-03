@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, Image } from 'react-native';
 import ImageManager from '../components/ImageManager';
 import LocationPicker from '../components/LocationPicker';
-import { addMoodEntry, getMoodEntries, deleteMoodEntry } from '../firebaseService';
+import { addMoodEntry, getMoodEntries, deleteMoodEntry, updateMoodEntry } from '../firebaseService';
 import * as Notifications from "expo-notifications";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import LocationDisplay from '../components/LocationDisplay';
@@ -15,6 +15,9 @@ export default function MoodTrackerScreen() {
   const [locations, setLocations] = useState([]);
   const [reminderTime, setReminderTime] = useState(null);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [editJournal, setEditJournal] = useState('');
+  const [editMood, setEditMood] = useState(null);
 
   const moods = [
     { label: 'Bad', color: '#e57373' },
@@ -108,9 +111,52 @@ export default function MoodTrackerScreen() {
 
   const renderEntry = ({ item }) => {
     if (!item) return null;
-
-    console.log('Rendering entry with locations:', item.locations); // Debug log
-
+  
+    if (editingEntry && editingEntry.id === item.id) {
+      return (
+        <View style={styles.entryContainer}>
+          <View style={styles.moodContainer}>
+            {moods.map((m) => (
+              <TouchableOpacity
+                key={m.label}
+                onPress={() => setEditMood(m.label)}
+                style={[
+                  styles.moodButton,
+                  { backgroundColor: m.color },
+                  editMood === m.label && styles.selectedMoodButton
+                ]}
+              >
+                <Text style={styles.moodButtonText}>{m.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+  
+          <TextInput
+            value={editJournal}
+            onChangeText={setEditJournal}
+            style={styles.journalInput}
+            multiline
+          />
+  
+          <View style={styles.editButtonsContainer}>
+            <TouchableOpacity 
+              onPress={handleSaveEdit}
+              style={styles.saveButton}
+            >
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+  
+            <TouchableOpacity 
+              onPress={() => setEditingEntry(null)}
+              style={styles.cancelEditButton}
+            >
+              <Text style={styles.cancelEditButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+  
     return (
       <View style={styles.entryContainer}>
         <View style={styles.entryHeader}>
@@ -121,32 +167,40 @@ export default function MoodTrackerScreen() {
             <Text style={styles.moodText}>{item.mood}</Text>
           </View>
         </View>
-
+  
         <Text style={styles.journalText}>{item.journal}</Text>
-
+  
         {Array.isArray(item.locations) && item.locations.length > 0 && (
-        <View style={styles.locationWrapper}>
-          <Text style={styles.locationHeader}>Wellness Locations:</Text>
-          {item.locations.map((loc, index) => {
-            console.log('Location being passed to LocationDisplay:', loc); // Debug log
-            return <LocationDisplay key={index} location={loc} />;
-          })}
-        </View>
-      )}
-
+          <View style={styles.locationWrapper}>
+            <Text style={styles.locationHeader}>Wellness Locations:</Text>
+            {item.locations.map((loc, index) => (
+              <LocationDisplay key={index} location={loc} />
+            ))}
+          </View>
+        )}
+  
         {item.imageUri && (
           <Image
             source={{ uri: item.imageUri }}
             style={styles.entryImage}
           />
         )}
-
-        <TouchableOpacity 
-          onPress={() => handleDelete(item.id)}
-          style={styles.deleteButton}
-        >
-          <Text style={styles.deleteButtonText}>Delete</Text>
-        </TouchableOpacity>
+  
+        <View style={styles.entryButtonsContainer}>
+          <TouchableOpacity 
+            onPress={() => handleEdit(item)}
+            style={styles.editButton}
+          >
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+  
+          <TouchableOpacity 
+            onPress={() => handleDelete(item.id)}
+            style={styles.deleteButton}
+          >
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -225,6 +279,36 @@ export default function MoodTrackerScreen() {
     } catch (error) {
       console.error('Error cancelling reminder:', error);
       Alert.alert('Error', 'Failed to cancel reminder');
+    }
+  };
+
+  const handleEdit = async (entry) => {
+    setEditingEntry(entry);
+    setEditJournal(entry.journal);
+    setEditMood(entry.mood);
+  };
+  
+  const handleSaveEdit = async () => {
+    if (!editMood || !editJournal.trim()) {
+      Alert.alert('Incomplete Entry', 'Please fill in all fields');
+      return;
+    }
+  
+    try {
+      const updatedEntry = {
+        ...editingEntry,
+        mood: editMood,
+        journal: editJournal.trim(),
+      };
+  
+      await updateMoodEntry(updatedEntry);
+      setEditingEntry(null);
+      setEditJournal('');
+      setEditMood(null);
+      fetchEntries();
+    } catch (error) {
+      console.error('Error updating entry:', error);
+      Alert.alert('Error', 'Failed to update entry: ' + error.message);
     }
   };
 
@@ -499,5 +583,38 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     paddingVertical: 2,
+  },
+  editButton: {
+    marginTop: 10,
+    padding: 8,
+    backgroundColor: '#4CAF50',
+    borderRadius: 4,
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  cancelEditButton: {
+    backgroundColor: '#9e9e9e',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  cancelEditButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  entryButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginTop: 10,
+  },
+  editButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
   },
 });
