@@ -108,6 +108,48 @@ export default function AppTabs() {
             );
             break;
 
+          case 'PHQ9Screen':
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 1,
+                routes: [
+                  { name: 'Tools' },
+                  {
+                    name: 'Tools',
+                    state: {
+                      routes: [
+                        { name: 'ToolsHome' },
+                        { name: 'Self-Assessment' },
+                        { name: 'PHQ9' }
+                      ]
+                    }
+                  }
+                ]
+              })
+            );
+            break;
+
+          case 'GAD7Screen':
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 1,
+                routes: [
+                  { name: 'Tools' },
+                  {
+                    name: 'Tools',
+                    state: {
+                      routes: [
+                        { name: 'ToolsHome' },
+                        { name: 'Self-Assessment' },
+                        { name: 'GAD7' }
+                      ]
+                    }
+                  }
+                ]
+              })
+            );
+            break;
+
           // Activities Stack Screens
           case 'WorkScreen':
             navigation.dispatch(
