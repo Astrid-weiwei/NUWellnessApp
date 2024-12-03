@@ -29,6 +29,9 @@ NUWellness App is a comprehensive React Native mobile application designed to en
   - Integrated "Forgot Password" functionality with email-based recovery.
 - External API Use:
   - OpenStreetMap API used for location features.
+- Edit Entries: Users can now edit their mood tracker entries, allowing updates to journals, moods, and attached photos or locations.
+- User Profile: A user profile section has been added to the Home screen, displaying user details and offering basic profile management functionality.
+
 
 ## Components and Structure
 The app is structured with React Navigation to handle screen transitions between the main pages:
@@ -135,7 +138,8 @@ The app integrates with Firebase Firestore to implement CRUD operations for each
 <img width="280" alt="image" src="https://github.com/Astrid-weiwei/NUWellnessApp/blob/iteration2-new/assets/Map%20and%20Location.jpg">
 
 #### Login Screen
-<img width="280" alt="image" src="https://github.com/Astrid-weiwei/NUWellnessApp/blob/iteration2-new/assets/LoginScreen.jpg">
+<img width="291" alt="image" src="https://github.com/user-attachments/assets/e613fb72-1faf-4631-a48b-dd1993e61283">
+
 
 #### Meditation Screen
 <img width="280" alt="image" src="https://github.com/Astrid-weiwei/NUWellnessApp/blob/iteration2-new/assets/MeditationScreen.jpg">
