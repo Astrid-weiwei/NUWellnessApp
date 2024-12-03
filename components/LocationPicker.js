@@ -458,14 +458,22 @@ const LocationPicker = ({ onLocationSelected }) => {
 
   const handleMarkerPress = (locationId) => {
     Alert.alert(
-      'Delete Location',
-      'Do you want to remove this location?',
+      'Location Options',
+      'What would you like to do with this location?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Edit Type',
+          onPress: () => handleEditLocation(location),
+          style: 'default'
+        },
         { 
           text: 'Delete',
           onPress: () => removeLocation(locationId),
           style: 'destructive'
+        },
+        { 
+          text: 'Cancel',
+          style: 'cancel'
         }
       ]
     );

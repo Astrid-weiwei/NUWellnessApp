@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ScrollView, FlatList } from 'react-native';
 import ImageManager from '../components/ImageManager';
 import LocationPicker from '../components/LocationPicker';
 import { addMoodEntry, getMoodEntries, deleteMoodEntry } from '../firebaseService';
