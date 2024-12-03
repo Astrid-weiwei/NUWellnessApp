@@ -14,55 +14,37 @@ export default function ImageManager({ onImageTaken }) {
     return true;
   };
 
-  // const takeImageHandler = async () => {
-  //   const hasPermission = await verifyPermissions();
-  //   if (!hasPermission) return;
-  
-  //   try {
-  //     const result = await ImagePicker.launchCameraAsync({
-  //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  //       allowsEditing: true,
-  //       quality: 1,
-  //     });
-  
-  //     if (!result.canceled) {
-  //       setImageUri(result.assets[0].uri);
-  //       onImageTaken(result.assets[0].uri);
-  //     }
-  //   } catch (err) {
-  //     console.error('Error launching camera:', err.message);
-  //     Alert.alert('Error', 'Camera is not available on the simulator. Please use a physical device.');
-  //   }
-  // };
-  
   const takeImageHandler = async () => {
     const hasPermission = await verifyPermissions();
     if (!hasPermission) return;
-  
+
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 1,
       });
-  
+
       if (!result.canceled) {
-        setImageUri(result.assets[0].uri);
-        onImageTaken(result.assets[0].uri);
+        const imageUri = result.assets[0].uri;
+        setImageUri(imageUri);
+        onImageTaken(imageUri);
       }
-    } catch (err) {
-      if (Platform.OS === "ios" || Platform.OS === "android") {
-        console.error("Error launching camera:", err.message);
-        Alert.alert("Error", "Camera is not available. Try using a physical device.");
-      }
+    } catch (error) {
+      console.error('Error launching camera:', error.message);
+      Alert.alert('Error', 'Camera is not available on the simulator. Please use a physical device.');
     }
   };
-  
 
   return (
     <View style={styles.container}>
       <Button title="Take Photo" onPress={takeImageHandler} />
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.imagePreview} />}
+      {imageUri && (
+        <>
+          <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+          <Button title="Retake Photo" onPress={() => setImageUri(null)} />
+        </>
+      )}
     </View>
   );
 }
