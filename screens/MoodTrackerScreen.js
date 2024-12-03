@@ -48,26 +48,24 @@ export default function MoodTrackerScreen() {
       const newEntry = {
         mood: selectedMood,
         journal: journal.trim(),
-        imageUri: imageUri || null, // Ensure null if undefined
-        locations: locations.map(loc => ({
-          type: loc.type || 'WELLNESS_CENTER', // Provide default type
-          placeName: loc.placeName || '', // Ensure empty string if undefined
-          latitude: Number(loc.latitude) || 0, // Ensure 0 if undefined
-          longitude: Number(loc.longitude) || 0, // Ensure 0 if undefined
-        })) || [], // Ensure empty array if undefined
+        imageUri: imageUri || null,
+        locations: Array.isArray(locations) ? locations.map(loc => ({
+          type: loc.type || 'WELLNESS_CENTER',
+          placeName: loc.placeName || '',
+          latitude: Number(loc.latitude) || 0,
+          longitude: Number(loc.longitude) || 0,
+        })) : [], // Ensure locations is an array before mapping
         timestamp: new Date().toISOString(),
       };
   
-      // Log the entry for debugging
       console.log('Saving entry:', newEntry);
-  
       await addMoodEntry(newEntry);
       
       // Reset form
       setJournal('');
       setSelectedMood(null);
       setImageUri(null);
-      setLocations([]);
+      setLocations([]); // Reset to empty array instead of undefined
       
       fetchEntries();
     } catch (error) {

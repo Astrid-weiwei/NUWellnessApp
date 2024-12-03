@@ -273,6 +273,52 @@ const getLocationName = async (latitude, longitude) => {
   }
 };
 
+// New utility functions for fallback mechanisms
+const getLocationWithFallback = async (latitude, longitude) => {
+  // Try cached name first
+  const cachedName = getLocationNameFromCache(latitude, longitude);
+  if (cachedName) {
+    return cachedName;
+  }
+
+  try {
+    // First attempt: Expo Location service
+    const expoResult = await getLocationName(latitude, longitude);
+    if (expoResult && expoResult !== 'Selected Location') {
+      return expoResult;
+    }
+
+    // Second attempt: OpenStreetMap
+    const osmResult = await fetchLocationName(latitude, longitude);
+    if (osmResult && osmResult !== 'Selected Location') {
+      return osmResult;
+    }
+
+    // Third attempt: Check predefined areas
+    const areaName = getLocationNameFromCache(latitude, longitude);
+    if (areaName) {
+      return areaName;
+    }
+
+    // Final fallback
+    return 'Selected Location';
+  } catch (error) {
+    console.warn('Error in location name resolution:', error);
+    return 'Selected Location';
+  }
+};
+
+const retryOperation = async (operation, maxAttempts = 3, delay = 1000) => {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      if (attempt === maxAttempts) throw error;
+      await new Promise(resolve => setTimeout(resolve, delay * attempt));
+    }
+  }
+};
+
 const LocationPicker = ({ onLocationSelected }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState([]);
@@ -324,9 +370,18 @@ const LocationPicker = ({ onLocationSelected }) => {
 
   const startLocationUpdates = async () => {
     try {
-      // First get initial location
-      const initialLocation = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
+      // First try high accuracy
+      const initialLocation = await retryOperation(async () => {
+        try {
+          return await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High
+          });
+        } catch {
+          // Fallback to balanced accuracy
+          return await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced
+          });
+        }
       });
       
       updateCurrentLocation(initialLocation.coords);
@@ -344,12 +399,25 @@ const LocationPicker = ({ onLocationSelected }) => {
       );
     } catch (error) {
       console.warn('Error starting location updates:', error);
-      Alert.alert(
-        'Location Error',
-        'Unable to track location. Using last known or default location.',
-        [{ text: 'OK' }]
-      );
+      handleLocationError();
     }
+  };
+
+  const handleLocationError = () => {
+    Alert.alert(
+      'Location Service Error',
+      'Unable to get your location. Using default Vancouver location. Would you like to retry?',
+      [
+        {
+          text: 'Use Default',
+          onPress: () => updateCurrentLocation(VANCOUVER_REGION)
+        },
+        {
+          text: 'Retry',
+          onPress: () => retryOperation(startLocationUpdates)
+        }
+      ]
+    );
   };
 
   const updateCurrentLocation = (coords) => {
@@ -400,68 +468,103 @@ const LocationPicker = ({ onLocationSelected }) => {
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         throw new Error('Invalid coordinates');
       }
-  
-      // Get location name using Expo Location
-      const result = await Location.reverseGeocodeAsync({
-        latitude,
-        longitude
-      });
-  
-      let locationName = 'Selected Location';
-      if (result[0]) {
-        const { street, district, city } = result[0];
-        locationName = [street, district || city]
-          .filter(Boolean)
-          .join(', ');
-      }
-  
+
+      setLoading(true);
+      
+      // Get location name with fallback mechanism
+      const locationName = await getLocationWithFallback(latitude, longitude);
+
       const location = {
         id: Date.now().toString(),
         latitude: Number(latitude.toFixed(6)),
         longitude: Number(longitude.toFixed(6)),
         type: selectedLocationType,
         timestamp: new Date().toISOString(),
-        placeName: locationName,  // Save the location name
+        placeName: locationName,
       };
-  
+
       const newLocation = {
         ...location,
         title: `${WELLNESS_TYPES[selectedLocationType].icon} ${locationName}`,
         description: WELLNESS_TYPES[selectedLocationType].label,
       };
-  
+
       setSelectedLocations(prev => [...prev, newLocation]);
     } catch (error) {
       console.warn('Error adding location:', error);
-      Alert.alert('Error', 'Unable to add location. Please try again.');
+      Alert.alert(
+        'Error Adding Location',
+        'Unable to add location. Would you like to retry?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          },
+          {
+            text: 'Retry',
+            onPress: () => handleMapPress(e)
+          }
+        ]
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleConfirmLocations = () => {
+  const saveLocationsWithRetry = async (locations) => {
     try {
-      const validLocations = selectedLocations.map(location => ({
-        ...location,
-        latitude: Number(location.latitude),
-        longitude: Number(location.longitude),
-        latitudeStr: location.latitude.toFixed(6),
-        longitudeStr: location.longitude.toFixed(6),
-      }));
+      await retryOperation(async () => {
+        // Validate all locations before saving
+        const validLocations = locations.map(location => {
+          if (!Number.isFinite(location.latitude) || !Number.isFinite(location.longitude)) {
+            throw new Error(`Invalid coordinates for location: ${location.id}`);
+          }
+          return {
+            ...location,
+            latitude: Number(location.latitude),
+            longitude: Number(location.longitude),
+            latitudeStr: location.latitude.toFixed(6),
+            longitudeStr: location.longitude.toFixed(6),
+          };
+        });
 
-      onLocationSelected(validLocations);
+        // Try to save to AsyncStorage first
+        try {
+          const locationJson = JSON.stringify(validLocations);
+          await AsyncStorage.setItem('recent_locations', locationJson);
+        } catch (error) {
+          console.warn('Failed to cache locations:', error);
+        }
+
+        return validLocations;
+      });
+    } catch (error) {
+      console.error('Failed to save locations:', error);
+      throw error;
+    }
+  };
+
+  const handleConfirmLocations = async () => {
+    try {
+      const savedLocations = await saveLocationsWithRetry(selectedLocations);
+      onLocationSelected(savedLocations);
       setModalVisible(false);
     } catch (error) {
-      console.warn('Error saving locations:', error);
-      Alert.alert('Error', 'Unable to save locations. Please try again.');
-    }
-  };
-
-  const removeLocation = (locationId) => {
-    setSelectedLocations(prev => prev.filter(loc => loc.id !== locationId));
-  };
-
-  const resetToVancouver = () => {
-    if (mapRef.current && mapReady) {
-      mapRef.current.animateToRegion(VANCOUVER_REGION, 1000);
+      Alert.alert(
+        'Error Saving Locations',
+        'Unable to save locations. Would you like to retry?',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+            onPress: () => setModalVisible(false)
+          },
+          {
+            text: 'Retry',
+            onPress: handleConfirmLocations
+          }
+        ]
+      );
     }
   };
 
@@ -520,6 +623,23 @@ const LocationPicker = ({ onLocationSelected }) => {
       'Choose a new type for this location:',
       buttons
     );
+  };
+
+  const removeLocation = (locationId) => {
+    setSelectedLocations(prev => prev.filter(loc => loc.id !== locationId));
+  };
+
+  const resetToVancouver = () => {
+    if (mapRef.current && mapReady) {
+      const vancouverRegion = {
+        latitude: 49.2827,
+        longitude: -123.1207,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      };
+      mapRef.current.animateToRegion(vancouverRegion, 1000);
+      setCurrentLocation(vancouverRegion);
+    }
   };
 
   const handleOpenModal = () => {
