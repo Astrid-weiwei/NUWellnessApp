@@ -5,7 +5,6 @@ import LoginScreen from './screens/LoginScreen';
 import AppTabs from './navigators/AppTabs';
 import * as Notifications from 'expo-notifications';
 
-// Set up notification handler - this goes outside the App component
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -30,11 +29,9 @@ export default function App() {
         // Handle notification tap
         const data = response.notification.request.content.data;
         console.log('Notification tapped:', data);
-        // You can add navigation logic here if needed
       }
     );
 
-    // Cleanup function
     return () => {
       receivedSubscription.remove();
       responseSubscription.remove();
