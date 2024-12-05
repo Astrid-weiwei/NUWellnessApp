@@ -600,25 +600,6 @@ const LocationPicker = ({ onLocationSelected }) => {
           onPress: () => handleEditLocation(location),
           style: 'default'
         },
-        {
-          text: 'Rename',
-          onPress: async () => {
-            // First try to get a new location name
-            const newName = await getLocationWithFallback(location.latitude, location.longitude);
-            
-            setSelectedLocations(prev => prev.map(loc => {
-              if (loc.id === locationId) {
-                return {
-                  ...loc,
-                  placeName: newName,
-                  title: `${WELLNESS_TYPES[loc.type].icon} ${newName}`
-                };
-              }
-              return loc;
-            }));
-          },
-          style: 'default'
-        },
         { 
           text: 'Delete',
           onPress: () => {

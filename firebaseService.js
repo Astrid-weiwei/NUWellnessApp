@@ -94,6 +94,17 @@ export const addThoughtEntry = async (entry) => {
       console.error("Error deleting thought entry: ", error);
     }
   };
+
+  export const updateThoughtEntry = async (id, updatedEntry) => {
+    try {
+      const thoughtDocRef = doc(db, 'thoughtEntries', id);
+      await updateDoc(thoughtDocRef, updatedEntry);
+      console.log("Thought entry updated successfully!");
+    } catch (error) {
+      console.error("Error updating thought entry:", error);
+      throw error;
+    }
+  };
   
 
 // Get all mood entries
