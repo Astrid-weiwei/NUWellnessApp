@@ -1,0 +1,69 @@
+17e93b0 - Shuojun Chen, 5 minutes ago : update README file with firebase rules
+78bd1fe - Shuojun Chen, 3 days ago : revise firebse config
+ecf2905 - Shuojun Chen, 3 days ago : add edits for the profile
+424032e - Shuojun Chen, 3 days ago : create a profile component and add to the home screen
+3900ce3 - Shuojun Chen, 3 days ago : add edits function to each entry
+82df6f5 - Shuojun Chen, 3 days ago : weak password warning and sorting entries
+c4a38df - Shuojun Chen, 3 days ago : move API to .env, debug the entry display and geocoding reverse
+815c879 - Shuojun Chen, 3 days ago : move firebaseConfig to .env file
+ada4c59 - Shuojun Chen, 3 days ago : revise map function and add fallback mechanisms for API errors
+9effed0 - Shuojun Chen, 3 days ago : try to debug geocoding
+1b7bed7 - Shuojun Chen, 3 days ago : revise and debug geocoding
+6465b1d - Shuojun Chen, 3 days ago : add reverse geocoding to the selected locations
+4feee79 - Shuojun Chen, 3 days ago : create location display component
+b449bc9 - Shuojun Chen, 3 days ago : add proper reset to the map
+8d4c6f9 - Shuojun Chen, 3 days ago : go back to the earlier version for the moodtrack screen
+dcdadd3 - Shuojun Chen, 3 days ago : revise navigators to remove the dupulicated and make it consistent
+287908e - Shuojun Chen, 3 days ago : add necessary adjustments to include the new screens
+79d69f9 - Shuojun Chen, 3 days ago : complete the PHQ9 qustionnaire function
+5a944f9 - Shuojun Chen, 3 days ago : complete the GAD7 qustionnaire function
+e096c27 - Shuojun Chen, 3 days ago : add pop-up windows for meditation exercises
+7a780ba - Shuojun Chen, 3 days ago : fix home page logos formatting
+fcccdde - Shuojun Chen, 3 days ago : debug edit marker function
+e074c1d - Shuojun Chen, 3 days ago : add edits function to the map marker
+13b328f - Shuojun Chen, 3 days ago : adjust container's styles
+f9042d2 - Shuojun Chen, 3 days ago : fix keyboard blocking problem
+f0f5778 - weiwei, 3 days ago : Add a photo preview functionality after taking a picture in ImageManager.js
+253e9cb - weiwei, 3 days ago : Add "Forgot Password" functionality to the LoginScreen.js
+519a304 - weiwei, 6 days ago : fix Firebase Auth Without AsyncStorage error
+1fe0d62 - weiwei, 6 days ago : iteration3 new changes
+69186e6 - weiwei, 6 days ago : Added new features for iteration 3
+730aa81 - Shuojun Chen, 12 days ago : revise the map to also include the user's current location
+2db5982 - Shuojun Chen, 12 days ago : revise and update the README file including Authentication Camera use Location use Notification External API use
+60b2b65 - Shuojun Chen, 12 days ago : update new contents for iteration 2
+84cb3da - Shuojun Chen, 12 days ago : add new screen shots for iteration 2
+3bff99c - Shuojun Chen, 12 days ago : preload the map caches to improve the API efficiency
+148e8ea - Shuojun Chen, 12 days ago : add delete function to the marker and refine the entry display on the mood tracker screen
+6f87ea0 - Shuojun Chen, 12 days ago : refine the login screen with more features, error handlings, and basic branding
+2fb94d8 - Shuojun Chen, 12 days ago : add daily reminder notification function to meditation screen
+8bd43fe - Shuojun Chen, 12 days ago : add daily reminder notification function to the mood tracker
+ab382f4 - Shuojun Chen, 12 days ago : check if everything updated
+e007ceb - Shuojun Chen, 12 days ago : debug the coordinates
+1136ed5 - Shuojun Chen, 12 days ago : refine the map with correct coordinate and debug
+692485d - Shuojun Chen, 12 days ago : refine the map with different kinds of markers
+44937e5 - Shuojun Chen, 12 days ago : update the location picker with OpenStreetMap API
+90c606d - Shuojun Chen, 12 days ago : add revisions responding the loction function
+f16e374 - Shuojun Chen, 12 days ago : update mood tracker screen to include the location
+f743b56 - Shuojun Chen, 12 days ago : create the location picker component
+6b4a716 - Shuojun Chen, 12 days ago : debug flatlist
+fb5358e - Shuojun Chen, 12 days ago : add necessary rendering code to implement notification function
+10afd79 - Shuojun Chen, 12 days ago : revise the NotificationManager component to respond to the 3 related screens
+9ec23ee - Shuojun Chen, 12 days ago : add notification function to the AppTab component
+4994433 - Shuojun Chen, 12 days ago : create the notification manager component
+a2ba64b - Weiwei Liu, 2 weeks ago : Merge pull request #6 from Astrid-weiwei/iteration2
+30953c0 - weiwei, 2 weeks ago : set up camera in the mood tracking part
+b3626ab - weiwei, 2 weeks ago : add the camera in moodtacking page
+973b105 - Weiwei Liu, 2 weeks ago : Merge pull request #5 from Astrid-weiwei/iteration2
+78b2b23 - weiwei, 2 weeks ago : implement autentication, make log in and log out and store it in firebase
+f86f652 - Weiwei Liu, 3 weeks ago : Update README.md
+44d5e80 - Weiwei Liu, 3 weeks ago : Merge pull request #4 from Astrid-weiwei/iteration1
+81aacdf - weiwei, 3 weeks ago : implement activies screen, work and life page, update the data in firebase
+b24fc21 - Weiwei Liu, 3 weeks ago : Merge pull request #3 from Astrid-weiwei/iteration1
+a533b23 - weiwei, 3 weeks ago : Set up navigation with Tools and Activities stack and build firebase collection
+95caa91 - Weiwei Liu, 3 weeks ago : Update README.md
+9488b71 - Weiwei Liu, 3 weeks ago : Merge pull request #2 from Astrid-weiwei/iteration1
+f4c59d6 - weiwei, 3 weeks ago : Implement home, tools and activity page
+d1049ac - Weiwei Liu, 3 weeks ago : Merge pull request #1 from Astrid-weiwei/iteration1
+83807b0 - weiwei, 3 weeks ago : component and screen structure
+a1f1b3d - Weiwei Liu, 3 weeks ago : Create README.md
+7b88601 - weiwei, 3 weeks ago : Initial commit with project setup
