@@ -1,7 +1,32 @@
-# NUWellness App
+## NUWellness App
 
 ## Overview
 NUWellness App is a comprehensive React Native mobile application designed to enhance mental well-being through task management, mood tracking, and various wellness tools. Integrated with Firebase Firestore, the app provides CRUD (Create, Read, Update, Delete) operations for managing to-do lists and mood entries, along with advanced functionalities like notifications, camera use, and location-based features.
+
+## Firestore rules and API
+### Firebase Configuration
+FIREBASE_API_KEY=AIzaSyC_zFSSHvXzoj9G9VEa6jArvKTScbzGUV4
+FIREBASE_AUTH_DOMAIN=nuwellnessapp.firebaseapp.com
+FIREBASE_PROJECT_ID=nuwellnessapp
+FIREBASE_STORAGE_BUCKET=nuwellnessapp.firebasestorage.app
+FIREBASE_MESSAGING_SENDER_ID=321520657474
+FIREBASE_APP_ID=1:321520657474:web:466570a023d3d4459f79db
+FIREBASE_MEASUREMENT_ID=G-7GEWMPFYK4
+
+### Map Configuration
+VANCOUVER_LATITUDE=49.2827
+VANCOUVER_LONGITUDE=-123.1207
+MAP_DELTA=0.05
+
+### Location Services
+NOMINATIM_BASE_URL=https://nominatim.openstreetmap.org
+USER_AGENT=MoodTrackerApp/1.0
+LOCATION_TIME_INTERVAL=10000
+LOCATION_DISTANCE_INTERVAL=10
+
+### Storage Keys
+LOCATION_CACHE_KEY=locationNameCache
+RECENT_LOCATIONS_KEY=recent_locations
 
 ## Features
 - Work and Life To-Do Lists: Toggle for task completion with persistent data storage.
