@@ -71,6 +71,31 @@ export const addThoughtEntry = async (entry) => {
     }
   };
 
+  export const getThoughtEntries = async () => {
+    try {
+      const querySnapshot = await getDocs(thoughtCollectionRef);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error("Error getting thought entries: ", error);
+      return [];
+    }
+  };
+
+
+  export const deleteThoughtEntry = async (id) => {
+    try {
+      const thoughtDocRef = doc(db, 'thoughtEntries', id);
+      await deleteDoc(thoughtDocRef);
+      console.log("Thought entry deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting thought entry: ", error);
+    }
+  };
+  
+
 // Get all mood entries
 export const getMoodEntries = async () => {
   try {
