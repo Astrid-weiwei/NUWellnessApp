@@ -42,6 +42,30 @@ The app integrates with Firebase Firestore to implement CRUD operations for each
 
 ## Data Model
 
+### Firebase rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is an author
+    function isAuthor() {
+      return request.auth.uid in [
+        'eWrGM0TEVIXH3GspiBLvfzJJq272',  
+        'r8Xz53FblZV7KP8wdV7YRHDelVL2',
+        'A3vdZvW1PecT3kHKdik7IVvY3le2'
+      ];
+    }
+
+    // Apply rules to all collections
+    match /{document=**} {
+      // Authors can read and write all documents
+      allow read, write: if isAuthor();
+      
+      // Regular users can't access anything
+      allow read, write: if false;
+    }
+  }
+}
+
 ### Collections in Firestore
 1. **WorkTodos**
    - **Fields**:
